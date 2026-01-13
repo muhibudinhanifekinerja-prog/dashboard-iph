@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard IPH Pangan</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+#iph-app .table-wrap{max-height:55vh;overflow:auto;}
+#iph-app th{position:sticky;top:0;background:#e9ecef;z-index:5}
+#iph-app .freeze-komoditas{position:sticky;left:0;background:#f8f9fa;z-index:6;min-width:180px}
+#iph-app .freeze-pasar{position:sticky;left:180px;background:#f1f3f5;z-index:6;min-width:140px}
+#iph-app .naik{color:red;font-weight:bold}
+#iph-app .turun{color:green;font-weight:bold}
+</style>
+</head>
+
+<body class="bg-light">
+<div class="container-fluid p-3" id="iph-app">
+
+<h4>📊 Dashboard IPH Pangan</h4>
+
+<div class="row g-2 mb-2">
+ <div class="col-md-3"><select id="komoditas" class="form-select"></select></div>
+ <div class="col-md-3"><select id="pasar" class="form-select"></select></div>
+ <div class="col-md-2">
+  <select id="bulan" class="form-select">
+    <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option>
+    <option value="04">Apr</option><option value="05">Mei</option><option value="06">Jun</option>
+    <option value="07">Jul</option><option value="08">Agu</option><option value="09">Sep</option>
+    <option value="10">Okt</option><option value="11">Nov</option><option value="12">Des</option>
+  </select>
+ </div>
+ <div class="col-md-2"><select id="tahun" class="form-select"><option>2024</option><option>2025</option><option>2026</option></select></div>
+ <div class="col-md-2"><button class="btn btn-primary w-100" onclick="loadData()">Tampilkan</button></div>
+</div>
+
+<!-- HARIAN -->
+<div class="table-wrap mb-3">
+<table class="table table-bordered table-sm" id="tabelHarian"></table>
+</div>
+
+<!-- MINGGUAN -->
+<h5>📅 IPH Mingguan (Gabungan Semua Pasar)</h5>
+<table class="table table-bordered" id="tabelMingguan"></table>
+
+<!-- PERSENTASE -->
+<h5 class="mt-3">📈 Persentase Perubahan vs Bulan Sebelumnya</h5>
+<table class="table table-bordered" id="tabelPersen"></table>
+
+<script>
+const { createClient } = supabase;
+const db = createClient(
+ "https://hkllhgmfbnepgtfnrxuj.supabase.co",
+ "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhrbGxoZ21mYm5lcGd0Zm5yeHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxOTA1NzQsImV4cCI6MjA4Mjc2NjU3NH0.Ft8giYKJIPPiGstRJXJNb_uuKQUuNlaAM8p2dE2UKs0"
+);
+
+async function loadMaster(){
+ let {data:kom}=await db.from("komoditas").select("*").order("nama_komoditas");
+ let {data:pas}=await db.from("pasar").select("*").order("nama_pasar");
+ komoditas.innerHTML=`<option value="">Semua Komoditas</option>`;
+ kom.forEach(k=>komoditas.innerHTML+=`<option value="${k.id_komoditas}">${k.nama_komoditas}</option>`);
+ pasar.innerHTML=`<option value="">Semua Pasar</option>`;
+ pas.forEach(p=>pasar.innerHTML+=`<option value="${p.id_pasar}">${p.nama_pasar}</option>`);
+}
+
+function getWeekIPH(dateStr){
+  const d = new Date(dateStr);
+  const y = d.getFullYear();
+  const m = d.getMonth();
+
+  const first = new Date(y, m, 1);
+  const firstDay = first.getDay(); // 0=Min,1=Sen,...6=Sab
+
+  let week1Start = new Date(first);
+
+  // Jika tanggal 1 jatuh Jumat, Sabtu, Minggu → Minggu 1 mulai Senin berikutnya
+  if(firstDay === 5 || firstDay === 6 || firstDay === 0){
+    const offset = (8 - firstDay) % 7;
+    week1Start = new Date(y, m, 1 + offset);
+  }
+
+  // Hitung hari kerja sejak awal minggu 1
+  let workDays = 0;
+  let cur = new Date(week1Start);
+
+  while(cur <= d){
+    const day = cur.getDay();
+    if(day >= 1 && day <= 5){
+      workDays++;
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  // Jika tanggal sebelum minggu 1, tetap masuk M1
+  if(workDays === 0) return 1;
+
+  return Math.ceil(workDays / 5);
+}
+
+async function getPrevMonthAvg(){
+ let y=parseInt(tahun.value), m=parseInt(bulan.value)-1;
+ if(m==0){m=12;y--;}
+ const start=`${y}-${String(m).padStart(2,"0")}-01`;
+ const end=new Date(y,m,0).toISOString().slice(0,10);
+
+ let {data}=await db.from("v_harga_harian")
+   .select("nama_komoditas,harga")
+   .gte("tanggal",start).lte("tanggal",end);
+
+ const map={};
+ data.forEach(r=>{
+   if(r.harga>0){
+     if(!map[r.nama_komoditas]) map[r.nama_komoditas]={t:0,c:0};
+     map[r.nama_komoditas].t+=r.harga;
+     map[r.nama_komoditas].c++;
+   }
+ });
+
+ const avg={};
+ for(const k in map) avg[k]=map[k].t/map[k].c;
+ return avg;
+}
+
+async function loadData(){
+ const start=`${tahun.value}-${bulan.value}-01`;
+ const end=new Date(tahun.value,parseInt(bulan.value),0).toISOString().slice(0,10);
+
+ let q=db.from("v_harga_harian").select("*")
+   .gte("tanggal",start).lte("tanggal",end).order("tanggal");
+
+ if(komoditas.value) q=q.eq("id_komoditas",komoditas.value);
+ if(pasar.value) q=q.eq("id_pasar",pasar.value);
+
+ let {data}=await q;
+
+ renderHarian(data);
+ renderMingguan(data);
+ const prev=await getPrevMonthAvg();
+ renderPersen(data,prev);
+}
+
+function renderHarian(rows){
+ const dates=[...new Set(rows.map(r=>r.tanggal))].sort();
+ const map={};
+
+ rows.forEach(r=>{
+  const key=r.id_komoditas+"-"+r.id_pasar;
+  if(!map[key]) map[key]={kom:r.nama_komoditas,pas:r.nama_pasar,data:{}};
+  map[key].data[r.tanggal]=r.harga;
+ });
+
+ let html="<tr><th class='freeze-komoditas'>Komoditas</th><th class='freeze-pasar'>Pasar</th>";
+ dates.forEach(d=>html+=`<th>${d}</th>`); html+="</tr>";
+
+ for(const k in map){
+  html+=`<tr><td class='freeze-komoditas'>${map[k].kom}</td><td class='freeze-pasar'>${map[k].pas}</td>`;
+  let prev=null;
+  dates.forEach(d=>{
+    let v=map[k].data[d];
+    if(!v||v==0){html+="<td>-</td>";return;}
+    let cls=""; if(prev){ if(v>prev)cls="naik"; if(v<prev)cls="turun"; }
+    prev=v;
+    html+=`<td class='${cls}'>Rp ${Number(v).toLocaleString()}</td>`;
+  });
+  html+="</tr>";
+ }
+
+ tabelHarian.innerHTML=html;
+}
+
+function renderMingguan(rows){
+ const map={};
+
+ rows.forEach(r=>{
+  const w=getWeekIPH(r.tanggal);
+  if(!map[r.nama_komoditas]) map[r.nama_komoditas]={};
+  if(!map[r.nama_komoditas][w]) map[r.nama_komoditas][w]={t:0,c:0};
+
+  if(r.harga>0){
+    map[r.nama_komoditas][w].t+=r.harga;
+    map[r.nama_komoditas][w].c++;
+  }
+ });
+
+ let html="<tr><th>Komoditas</th><th>M1</th><th>M2</th><th>M3</th><th>M4</th><th>M5</th></tr>";
+
+ for(const k in map){
+  html+=`<tr><td>${k}</td>`;
+  let cumT=0,cumC=0;
+  for(let i=1;i<=5;i++){
+    if(map[k][i]){
+      cumT+=map[k][i].t;
+      cumC+=map[k][i].c;
+    }
+    html+=cumC?`<td>Rp ${(cumT/cumC).toLocaleString()}</td>`:"<td>-</td>";
+  }
+  html+="</tr>";
+ }
+
+ tabelMingguan.innerHTML=html;
+}
+
+function renderPersen(rows,prevAvg){
+ const map={};
+
+ rows.forEach(r=>{
+  const w=getWeekIPH(r.tanggal);
+  if(!map[r.nama_komoditas]) map[r.nama_komoditas]={};
+  if(!map[r.nama_komoditas][w]) map[r.nama_komoditas][w]={t:0,c:0};
+
+  if(r.harga>0){
+    map[r.nama_komoditas][w].t+=r.harga;
+    map[r.nama_komoditas][w].c++;
+  }
+ });
+
+ let html="<tr><th>Komoditas</th><th>M1</th><th>M2</th><th>M3</th><th>M4</th><th>M5</th></tr>";
+
+ for(const k in map){
+  html+=`<tr><td>${k}</td>`;
+  let cumT=0,cumC=0;
+  for(let i=1;i<=5;i++){
+    if(map[k][i]){
+      cumT+=map[k][i].t;
+      cumC+=map[k][i].c;
+    }
+    if(!prevAvg[k]) html+="<td>Data belum tersedia</td>";
+    else if(cumC){
+      const avgNow=cumT/cumC;
+      const pct=((avgNow-prevAvg[k])/prevAvg[k]*100).toFixed(2);
+      html+=`<td>${pct}%</td>`;
+    }else html+="<td>-</td>";
+  }
+  html+="</tr>";
+ }
+
+ tabelPersen.innerHTML=html;
+}
+
+const now=new Date();
+bulan.value=String(now.getMonth()+1).padStart(2,"0");
+tahun.value=now.getFullYear();
+loadMaster();
+</script>
+
+</div>
+</body>
+</html>
