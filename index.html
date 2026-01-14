@@ -21,6 +21,25 @@
 #iph-app .heat-down{background:#d1e7dd;}
 #iph-app .heat-same{background:#e2e3e5;}
 #iph-app .heat-zero{background:#fff;}
+/* ===== FIX HEATMAP OVERFLOW ===== */
+#iph-app .heatmap-wrap{
+  max-height:55vh;
+  overflow:auto;
+}
+
+#iph-app .heatmap-wrap table{
+  width:max-content;
+  min-width:100%;
+  table-layout:fixed;
+}
+
+#iph-app .heatmap-wrap th,
+#iph-app .heatmap-wrap td{
+  white-space:nowrap;
+  text-align:center;
+  font-size:12px;
+}
+
 </style>
 </head>
 
@@ -111,7 +130,11 @@
   <div class="card-header bg-white">
     <i class="bi bi-grid-3x3-gap"></i> Heatmap Harga Harian
   </div>
-  <div class="card-body p-0" id="heatmap"></div>
+  <div class="card-body p-0">
+    <div class="table-wrap heatmap-wrap">
+      <div id="heatmap"></div>
+    </div>
+  </div>
 </div>
 
 </div>
