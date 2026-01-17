@@ -1,188 +1,125 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>Dashboard Harga Pangan</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <title>Dashboard Harga Pangan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Bootstrap -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-<!-- Supabase & Chart -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-.table-wrap{max-height:55vh;overflow:auto}
-th{position:sticky;top:0;background:#e9ecef;z-index:5}
-.freeze-komoditas{position:sticky;left:0;background:#f8f9fa;z-index:6;min-width:180px}
-.freeze-pasar{position:sticky;left:180px;background:#f1f3f5;z-index:6;min-width:140px}
-
-.naik{color:#dc3545;font-weight:bold}
-.turun{color:#198754;font-weight:bold}
-
-.heat-up{background:#f8d7da}
-.heat-down{background:#d1e7dd}
-.heat-same{background:#e2e3e5}
-.heat-zero{background:#fff}
-</style>
+  <style>
+    body { background:#f4f6fa; }
+    .up { color:#dc3545; font-weight:600; }
+    .down { color:#198754; font-weight:600; }
+    .flat { color:#6c757d; }
+    .small-title { font-size:.85rem; color:#6c757d; }
+  </style>
 </head>
 
-<body class="bg-light">
+<body>
 
 <!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3">
-  <span class="navbar-brand">
-    <i class="bi bi-bar-chart-line"></i> Dashboard Harga Pangan
-  </span>
-  <ul class="navbar-nav ms-3">
-    <li class="nav-item">
-      <a class="nav-link active" href="#" onclick="showPage('beranda')">
-        <i class="bi bi-house"></i> Beranda
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#" onclick="showPage('perkembangan')">
-        <i class="bi bi-graph-up"></i> Perkembangan
-      </a>
-    </li>
-  </ul>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="index.html">
+      <i class="bi bi-bar-chart-line-fill me-1"></i>
+      Dashboard Harga Pangan
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link active" href="index.html">
+            <i class="bi bi-house-door-fill me-1"></i>
+            Beranda
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="perkembangan.html">
+            <i class="bi bi-graph-up-arrow me-1"></i>
+            Perkembangan Harga
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
 </nav>
 
-<div class="container-fluid p-3">
+<div class="container my-4">
 
-<!-- ================== BERANDA ================== -->
-<div id="page-beranda">
-
-  <!-- SUMMARY -->
-  <div class="row g-3 mb-3" id="summaryCards"></div>
-
-  <!-- TOP LIST -->
-  <div class="row g-3 mb-3">
+  <!-- RINGKASAN -->
+  <div class="row g-3 mb-4">
     <div class="col-md-6">
-      <div class="card shadow-sm">
-        <div class="card-header fw-bold">Top 5 Komoditas Termahal</div>
-        <ul class="list-group list-group-flush" id="topMahal"></ul>
+      <div class="card shadow-sm border-danger">
+        <div class="card-body">
+          <div class="small-title">
+            <i class="bi bi-arrow-up-circle-fill text-danger me-1"></i>
+            Harga Tertinggi Bulan Ini
+          </div>
+          <h5 id="hargaTertinggi" class="text-danger mb-0">–</h5>
+          <small id="komoditasTertinggi" class="text-muted">–</small>
+        </div>
       </div>
     </div>
     <div class="col-md-6">
-      <div class="card shadow-sm">
-        <div class="card-header fw-bold">Top 5 Kenaikan Bulanan</div>
-        <ul class="list-group list-group-flush" id="topNaik"></ul>
+      <div class="card shadow-sm border-success">
+        <div class="card-body">
+          <div class="small-title">
+            <i class="bi bi-arrow-down-circle-fill text-success me-1"></i>
+            Harga Terendah Bulan Ini
+          </div>
+          <h5 id="hargaTerendah" class="text-success mb-0">–</h5>
+          <small id="komoditasTerendah" class="text-muted">–</small>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- WARNING -->
-  <div class="card mb-3 shadow-sm">
-    <div class="card-header fw-bold text-danger">
-      <i class="bi bi-exclamation-triangle"></i> Peringatan Dini
+  <!-- TABEL 3 BULAN -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h6 class="fw-bold mb-3">
+        <i class="bi bi-table me-1"></i>
+        Perkembangan Harga (3 Bulan Terakhir)
+      </h6>
+
+      <div class="table-responsive" style="max-height:420px; overflow-y:auto;">
+        <table class="table table-bordered table-sm align-middle">
+          <thead class="table-light sticky-top">
+            <tr id="headerBulan">
+              <th style="width:50px">No</th>
+              <th>Komoditas</th>
+            </tr>
+          </thead>
+          <tbody id="bodyTable"></tbody>
+        </table>
+      </div>
     </div>
-    <ul class="list-group list-group-flush" id="peringatanList"></ul>
   </div>
 
   <!-- NARASI -->
-  <div class="card mb-3 shadow-sm">
-    <div class="card-header fw-bold">Ringkasan Otomatis</div>
-    <div class="card-body">
-      <p id="narasiBulanan" class="mb-0"></p>
-    </div>
-  </div>
-
-  <!-- GRAFIK -->
   <div class="card shadow-sm">
-    <div class="card-header fw-bold">Grafik Rata-rata Bulanan</div>
     <div class="card-body">
-      <canvas id="chartBulanan" height="120"></canvas>
-      <div id="legendKomoditas" class="mt-3 d-flex flex-wrap gap-3"></div>
+      <h6 class="fw-bold mb-2">
+        <i class="bi bi-info-circle-fill me-1"></i>
+        Analisis Singkat
+      </h6>
+      <p id="narasi" class="mb-0 text-muted">
+        Memuat analisis…
+      </p>
     </div>
   </div>
 
 </div>
 
-<!-- ================== PERKEMBANGAN ================== -->
-<div id="page-perkembangan" class="d-none">
-
-<!-- FILTER -->
-<div class="card mb-3 shadow-sm">
-  <div class="card-body">
-    <div class="row g-2 align-items-end">
-      <div class="col-md-3">
-        <label class="form-label">Komoditas</label>
-        <select id="komoditas" class="form-select"></select>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Pasar</label>
-        <select id="pasar" class="form-select"></select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Bulan</label>
-        <select id="bulan" class="form-select">
-          <option value="01">Jan</option><option value="02">Feb</option>
-          <option value="03">Mar</option><option value="04">Apr</option>
-          <option value="05">Mei</option><option value="06">Jun</option>
-          <option value="07">Jul</option><option value="08">Agu</option>
-          <option value="09">Sep</option><option value="10">Okt</option>
-          <option value="11">Nov</option><option value="12">Des</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Tahun</label>
-        <select id="tahun" class="form-select"></select>
-      </div>
-      <div class="col-md-2 d-grid">
-        <button class="btn btn-primary" onclick="loadData()">
-          <i class="bi bi-search"></i> Tampilkan
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- TABEL & GRAFIK -->
-<div class="card mb-3 shadow-sm">
-  <div class="card-header fw-bold">Harga Harian</div>
-  <div class="table-wrap">
-    <table class="table table-bordered table-sm">
-      <thead id="tabelHarian"></thead>
-    </table>
-  </div>
-</div>
-
-<div class="card mb-3 shadow-sm">
-  <div class="card-header fw-bold">Rata-rata Mingguan (IPH)</div>
-  <div class="table-wrap">
-    <table class="table table-bordered table-sm">
-      <thead id="tabelMingguan"></thead>
-    </table>
-  </div>
-</div>
-
-<div class="card mb-3 shadow-sm">
-  <div class="card-header fw-bold">Grafik IPH Mingguan</div>
-  <div class="card-body">
-    <canvas id="chartIPH" height="120"></canvas>
-  </div>
-</div>
-
-<div class="card mb-3 shadow-sm">
-  <div class="card-header fw-bold">Perubahan (%) dibanding Bulan Lalu</div>
-  <div class="table-wrap">
-    <table class="table table-bordered table-sm">
-      <thead id="tabelPersen"></thead>
-    </table>
-  </div>
-</div>
-
-<div class="card mb-3 shadow-sm">
-  <div class="card-header fw-bold">Heatmap Perubahan Harga</div>
-  <div id="heatmap" class="table-wrap"></div>
-</div>
-
-</div>
-</div>
-
-<script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="app-beranda.js"></script>
 </body>
 </html>

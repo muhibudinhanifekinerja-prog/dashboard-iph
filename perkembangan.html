@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Perkembangan Harga | Dashboard Harga Pangan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body { background:#f4f6fa; }
+    .section-title { font-weight:600; }
+    <style>
+  /* wrapper scroll horizontal */
+  .table-scroll-x {
+    overflow-x: auto;
+    position: relative;
+  }
+
+  /* freeze kolom */
+  th.sticky-col,
+  td.sticky-col {
+    position: sticky;
+    left: 0;
+    background: #fff;
+    z-index: 2;
+  }
+
+  th.sticky-col-2,
+  td.sticky-col-2 {
+    position: sticky;
+    left: 200px; /* lebar kolom pertama */
+    background: #fff;
+    z-index: 2;
+  }
+
+  thead th {
+    z-index: 3;
+    background: #f8f9fa;
+  }
+  /* wrapper untuk scroll dua arah */
+.table-scroll-both {
+  max-height: 420px;      /* scroll vertikal */
+  overflow-y: auto;
+  overflow-x: auto;       /* scroll horizontal */
+  position: relative;
+}
+
+/* freeze kolom komoditas (opsional tapi direkomendasikan) */
+.sticky-col {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 2;
+}
+
+/* header tetap di atas */
+.table-scroll-both thead th {
+  position: sticky;
+  top: 0;
+  background: #f8f9fa;
+  z-index: 3;
+}
+
+</style>
+
+  </style>
+</head>
+
+<body>
+
+<!-- NAVBAR (SAMA DENGAN BERANDA) -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="index.html">
+      <i class="bi bi-bar-chart-line-fill me-1"></i>
+      Dashboard Harga Pangan
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="index.html">
+            <i class="bi bi-house-door-fill me-1"></i>
+            Beranda
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="perkembangan.html">
+            <i class="bi bi-graph-up-arrow me-1"></i>
+            Perkembangan Harga
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container my-4">
+
+  <!-- FILTER -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+
+        <div class="col-md-3">
+          <label class="form-label">Komoditas</label>
+          <select id="filterKomoditas" class="form-select">
+            <option value="">Semua Komoditas</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Pasar</label>
+          <select id="filterPasar" class="form-select">
+            <option value="">Semua Pasar</option>
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label">Bulan</label>
+          <select id="filterBulan" class="form-select">
+            <option value="1">Jan</option>
+            <option value="2">Feb</option>
+            <option value="3">Mar</option>
+            <option value="4">Apr</option>
+            <option value="5">Mei</option>
+            <option value="6">Jun</option>
+            <option value="7">Jul</option>
+            <option value="8">Agu</option>
+            <option value="9">Sep</option>
+            <option value="10">Okt</option>
+            <option value="11">Nov</option>
+            <option value="12">Des</option>
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label">Tahun</label>
+          <select id="filterTahun" class="form-select">
+            <option>2023</option>
+            <option selected>2024</option>
+            <option>2025</option>
+          </select>
+        </div>
+
+        <div class="col-md-2 d-grid">
+          <button id="btnTampil" class="btn btn-primary">
+            <i class="bi bi-search me-1"></i>
+            Tampilkan
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- HARGA HARIAN -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h6 class="section-title mb-2">
+        <i class="bi bi-calendar-day me-1"></i>
+        Harga Harian
+      </h6>
+      <div id="hargaHarian" style="max-height:420px; overflow-y:auto; overflow-x: auto;">
+        <!-- ISI TABEL HARGA HARIAN (JS LAMA) -->
+      </div>
+    </div>
+  </div>
+
+  <!-- IPH MINGGUAN -->
+  <div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <h6 class="section-title mb-1">
+      Rata-rata Harga Mingguan (Kumulatif)
+    </h6>
+    <small class="text-muted">
+      Senin–Jumat, kumulatif dari Minggu ke-1 sampai Minggu ke-m
+    </small>
+
+    <div id="iphMingguan" class="mt-3">
+      <!-- tabel akan muncul di sini -->
+    </div>
+  </div>
+</div>
+
+
+  <!-- GRAFIK IPH -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h6 class="section-title mb-2">
+        <i class="bi bi-graph-up me-1"></i>
+        Grafik IPH Mingguan
+      </h6>
+      <canvas id="chartIph" height="120"></canvas>
+    </div>
+  </div>
+
+  <!-- PERUBAHAN (%) -->
+  <div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <h6 class="section-title mb-1">% Perubahan Mingguan</h6>
+    <small class="text-muted">
+      Dibanding rata-rata bulan sebelumnya
+    </small>
+
+    <div id="perubahanPersen" class="mt-3"
+         style="max-height: 260px; overflow-y: auto;">
+      <!-- tabel diisi JS -->
+    </div>
+  </div>
+
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- PAKAI JS DASHBOARD LAMA -->
+<script>
+  
+
+</script>
+<script src="app-perkembangan.js"></script>
+
+</body>
+</html>
