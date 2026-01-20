@@ -9,6 +9,31 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 function getJumlahHari(bulan, tahun) {
   return new Date(tahun, bulan, 0).getDate();
 }
+async function loadHargaHarian() {
+  const komoditas = document.getElementById('filterKomoditas').value;
+  const pasar = document.getElementById('filterPasar').value;
+  const bulan = document.getElementById('filterBulan').value; // 1-12
+  const tahun = document.getElementById('filterTahun').value;
+
+  let url =
+    `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap`
+    + `?select=id_komoditas,nama_komoditas,id_pasar,nama_pasar,tanggal,harga`
+    + `&tanggal=gte.${tahun}-${bulan.padStart(2,'0')}-01`
+    + `&tanggal=lte.${tahun}-${bulan.padStart(2,'0')}-31`;
+
+  if (komoditas) url += `&id_komoditas=eq.${komoditas}`;
+  if (pasar) url += `&id_pasar=eq.${pasar}`;
+
+  const res = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`
+    }
+  });
+
+  const data = await res.json();
+  renderTabelHargaHarian(data, bulan, tahun);
+}
 
 async function loadFilterTahun() {
   try {
@@ -109,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
