@@ -6,6 +6,10 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 /*************************************************
  * HELPER
  *************************************************/
+function getJumlahHari(bulan, tahun) {
+  return new Date(tahun, bulan, 0).getDate();
+}
+
 async function loadFilterTahun() {
   try {
     const res = await fetch(
@@ -105,5 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
