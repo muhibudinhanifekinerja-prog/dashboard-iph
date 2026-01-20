@@ -12,6 +12,77 @@ function getJumlahHari(bulan, tahun) {
 function formatRupiah(angka) {
   return 'Rp ' + Number(angka).toLocaleString('id-ID');
 }
+function renderTabelHargaHarian(data) {
+  const container = document.getElementById('hargaHarian');
+  container.innerHTML = '';
+
+  if (!Array.isArray(data)) {
+    container.innerHTML =
+      '<div class="text-danger">Data harga harian tidak valid</div>';
+    return;
+  }
+
+  if (data.length === 0) {
+    container.innerHTML =
+      '<div class="text-muted">Tidak ada data</div>';
+    return;
+  }
+
+  // Ambil tanggal unik (yyyy-mm-dd)
+  const tanggalList = [...new Set(data.map(d => d.tanggal))].sort();
+
+  // Group komoditas + pasar
+  const map = {};
+  data.forEach(d => {
+    const key = `${d.nama_komoditas}__${d.nama_pasar}`;
+    if (!map[key]) {
+      map[key] = {
+        komoditas: d.nama_komoditas,
+        pasar: d.nama_pasar,
+        harga: {}
+      };
+    }
+    map[key].harga[d.tanggal] = d.harga;
+  });
+
+  let html = `
+  <div class="table-scroll-both">
+  <table class="table table-bordered table-sm align-middle">
+    <thead>
+      <tr>
+        <th class="sticky-col">No</th>
+        <th class="sticky-col">Komoditas</th>
+        <th class="sticky-col">Pasar</th>`;
+
+  tanggalList.forEach(tgl => {
+    html += `<th class="text-center">${tgl}</th>`;
+  });
+
+  html += `</tr></thead><tbody>`;
+
+  let no = 1;
+  Object.values(map).forEach(row => {
+    html += `
+      <tr>
+        <td class="sticky-col text-center">${no++}</td>
+        <td class="sticky-col">${row.komoditas}</td>
+        <td class="sticky-col">${row.pasar}</td>`;
+
+    tanggalList.forEach(tgl => {
+      const val = row.harga[tgl];
+      html += `
+        <td class="text-end">
+          ${val && val > 0 ? formatRupiah(val) : '-'}
+        </td>`;
+    });
+
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
+}
+
 async function loadFilterTahun() {
   try {
     const res = await fetch(
@@ -150,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
