@@ -3,6 +3,7 @@
  *************************************************/
 const SUPABASE_URL = "https://hkllhgmfbnepgtfnrxuj.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhrbGxoZ21mYm5lcGd0Zm5yeHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxOTA1NzQsImV4cCI6MjA4Mjc2NjU3NH0.Ft8giYKJIPPiGstRJXJNb_uuKQUuNlaAM8p2dE2UKs0";
+const DEBUG_SUPABASE = true;
 /*************************************************
  * HELPER
  *************************************************/
@@ -208,7 +209,45 @@ async function loadHargaHarian() {
 
   renderTabelHargaHarian(data);
 }
+async function fetchSupabase(url, label = '') {
+  if (DEBUG_SUPABASE) {
+    console.group(`🔎 Supabase Request ${label}`);
+    console.log('URL:', url);
+  }
 
+  try {
+    const res = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
+      }
+    });
+
+    if (DEBUG_SUPABASE) {
+      console.log('HTTP Status:', res.status);
+    }
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('❌ Supabase Error:', errText);
+      console.groupEnd();
+      return null;
+    }
+
+    const data = await res.json();
+    if (DEBUG_SUPABASE) {
+      console.log('Rows:', Array.isArray(data) ? data.length : 'NOT ARRAY');
+      console.groupEnd();
+    }
+
+    return data;
+
+  } catch (err) {
+    console.error('🔥 Fetch Exception:', err);
+    console.groupEnd();
+    return null;
+  }
+}
 document.getElementById('btnTampil')
   .addEventListener('click', () => {
     loadHargaHarian();
@@ -221,6 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
