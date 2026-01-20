@@ -9,6 +9,10 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 function getJumlahHari(bulan, tahun) {
   return new Date(tahun, bulan, 0).getDate();
 }
+function formatRupiah(angka) {
+  return 'Rp ' + Number(angka).toLocaleString('id-ID');
+}
+
 async function loadHargaHarian() {
   const komoditas = document.getElementById('filterKomoditas').value;
   const pasar = document.getElementById('filterPasar').value;
@@ -34,7 +38,7 @@ async function loadHargaHarian() {
   const data = await res.json();
   renderTabelHargaHarian(data, bulan, tahun);
 }
-function renderTabelHargaHarian(data, bulan, tahun) {
+function renderTabelHargaHarian(data) {
   const container = document.getElementById('hargaHarian');
   container.innerHTML = '';
 
@@ -43,13 +47,19 @@ function renderTabelHargaHarian(data, bulan, tahun) {
     return;
   }
 
-  const totalHari = getJumlahHari(bulan, tahun);
+  // =========================
+  // 1. Ambil tanggal unik (yyyy-mm-dd) dari DB
+  // =========================
+  const tanggalList = [
+    ...new Set(data.map(d => d.tanggal))
+  ].sort(); // ISO date aman di-sort string
 
-  // ===== GROUP DATA =====
+  // =========================
+  // 2. Group data per Komoditas + Pasar
+  // =========================
   const map = {};
   data.forEach(d => {
     const key = `${d.nama_komoditas}__${d.nama_pasar}`;
-    const tgl = new Date(d.tanggal).getDate();
 
     if (!map[key]) {
       map[key] = {
@@ -58,10 +68,14 @@ function renderTabelHargaHarian(data, bulan, tahun) {
         harga: {}
       };
     }
-    map[key].harga[tgl] = d.harga;
+
+    // simpan harga berdasarkan tanggal ISO
+    map[key].harga[d.tanggal] = d.harga;
   });
 
-  // ===== TABLE HEADER =====
+  // =========================
+  // 3. Render HEADER
+  // =========================
   let html = `
   <div class="table-scroll-both">
   <table class="table table-bordered table-sm align-middle">
@@ -71,13 +85,15 @@ function renderTabelHargaHarian(data, bulan, tahun) {
         <th class="sticky-col">Komoditas</th>
         <th class="sticky-col">Pasar</th>`;
 
-  for (let i = 1; i <= totalHari; i++) {
-    html += `<th class="text-center">${i}</th>`;
-  }
+  tanggalList.forEach(tgl => {
+    html += `<th class="text-center">${tgl}</th>`;
+  });
 
   html += `</tr></thead><tbody>`;
 
-  // ===== TABLE BODY =====
+  // =========================
+  // 4. Render BODY
+  // =========================
   let no = 1;
   Object.values(map).forEach(row => {
     html += `
@@ -86,13 +102,13 @@ function renderTabelHargaHarian(data, bulan, tahun) {
       <td class="sticky-col">${row.komoditas}</td>
       <td class="sticky-col">${row.pasar}</td>`;
 
-    for (let i = 1; i <= totalHari; i++) {
-      const val = row.harga[i];
+    tanggalList.forEach(tgl => {
+      const val = row.harga[tgl];
       html += `
         <td class="text-end">
           ${val ? formatRupiah(val) : '-'}
         </td>`;
-    }
+    });
 
     html += `</tr>`;
   });
@@ -100,6 +116,7 @@ function renderTabelHargaHarian(data, bulan, tahun) {
   html += `</tbody></table></div>`;
   container.innerHTML = html;
 }
+
 
 async function loadFilterTahun() {
   try {
@@ -202,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
