@@ -12,109 +12,53 @@ function getJumlahHari(bulan, tahun) {
 function formatRupiah(angka) {
   return 'Rp ' + Number(angka).toLocaleString('id-ID');
 }
-
 async function loadHargaHarian() {
   const komoditas = document.getElementById('filterKomoditas').value;
   const pasar = document.getElementById('filterPasar').value;
-  const bulan = document.getElementById('filterBulan').value; // 1-12
+  const bulan = document.getElementById('filterBulan').value;
   const tahun = document.getElementById('filterTahun').value;
+
+  const bulanPad = bulan.toString().padStart(2, '0');
+  const startDate = `${tahun}-${bulanPad}-01`;
+  const endDate = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
 
   let url =
     `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap`
-    + `?select=id_komoditas,nama_komoditas,id_pasar,nama_pasar,tanggal,harga`
-    + `&tanggal=gte.${tahun}-${bulan.padStart(2,'0')}-01`
-    + `&tanggal=lte.${tahun}-${bulan.padStart(2,'0')}-31`;
+    + `?select=nama_komoditas,nama_pasar,tanggal,harga`
+    + `&tanggal=gte.${startDate}`
+    + `&tanggal=lte.${endDate}`
+    + `&order=nama_komoditas.asc`
+    + `&order=nama_pasar.asc`
+    + `&order=tanggal.asc`;
 
   if (komoditas) url += `&id_komoditas=eq.${komoditas}`;
   if (pasar) url += `&id_pasar=eq.${pasar}`;
 
-  const res = await fetch(url, {
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`
-    }
-  });
-
-  const data = await res.json();
-  renderTabelHargaHarian(data, bulan, tahun);
-}
-function renderTabelHargaHarian(data) {
-  const container = document.getElementById('hargaHarian');
-  container.innerHTML = '';
-
-  if (!data || data.length === 0) {
-    container.innerHTML = '<div class="text-muted">Tidak ada data</div>';
-    return;
-  }
-
-  // =========================
-  // 1. Ambil tanggal unik (yyyy-mm-dd) dari DB
-  // =========================
-  const tanggalList = [
-    ...new Set(data.map(d => d.tanggal))
-  ].sort(); // ISO date aman di-sort string
-
-  // =========================
-  // 2. Group data per Komoditas + Pasar
-  // =========================
-  const map = {};
-  data.forEach(d => {
-    const key = `${d.nama_komoditas}__${d.nama_pasar}`;
-
-    if (!map[key]) {
-      map[key] = {
-        komoditas: d.nama_komoditas,
-        pasar: d.nama_pasar,
-        harga: {}
-      };
-    }
-
-    // simpan harga berdasarkan tanggal ISO
-    map[key].harga[d.tanggal] = d.harga;
-  });
-
-  // =========================
-  // 3. Render HEADER
-  // =========================
-  let html = `
-  <div class="table-scroll-both">
-  <table class="table table-bordered table-sm align-middle">
-    <thead>
-      <tr>
-        <th class="sticky-col">No</th>
-        <th class="sticky-col">Komoditas</th>
-        <th class="sticky-col">Pasar</th>`;
-
-  tanggalList.forEach(tgl => {
-    html += `<th class="text-center">${tgl}</th>`;
-  });
-
-  html += `</tr></thead><tbody>`;
-
-  // =========================
-  // 4. Render BODY
-  // =========================
-  let no = 1;
-  Object.values(map).forEach(row => {
-    html += `
-    <tr>
-      <td class="sticky-col text-center">${no++}</td>
-      <td class="sticky-col">${row.komoditas}</td>
-      <td class="sticky-col">${row.pasar}</td>`;
-
-    tanggalList.forEach(tgl => {
-      const val = row.harga[tgl];
-      html += `
-        <td class="text-end">
-          ${val ? formatRupiah(val) : '-'}
-        </td>`;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
+      }
     });
 
-    html += `</tr>`;
-  });
+    if (!res.ok) {
+      console.error(await res.text());
+      return;
+    }
 
-  html += `</tbody></table></div>`;
-  container.innerHTML = html;
+    const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      console.error('Data bukan array:', data);
+      return;
+    }
+
+    renderTabelHargaHarian(data);
+
+  } catch (err) {
+    console.error('Error loadHargaHarian:', err);
+  }
 }
 
 
@@ -307,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
