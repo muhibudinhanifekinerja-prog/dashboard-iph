@@ -212,13 +212,18 @@ async function loadFilterPasar() {
   }
 }
 document.getElementById('btnTampil')
-  .addEventListener('click', loadHargaHarian);
+  .addEventListener('click', () => {
+    loadHargaHarian();
+    //loadIphMingguan();
+    //loadPerubahanMingguan();
+  });
 
 document.addEventListener('DOMContentLoaded', () => {
   loadFilterTahun();
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
