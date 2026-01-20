@@ -211,6 +211,90 @@ async function loadFilterPasar() {
     console.error('Gagal load pasar:', err);
   }
 }
+async function loadIphMingguan() {
+  const komoditas = document.getElementById('filterKomoditas').value;
+  const pasar = document.getElementById('filterPasar').value;
+
+  let url =
+    `${SUPABASE_URL}/rest/v1/v_iph_mingguan_kumulatif`
+    + `?select=id_komoditas,nama_komoditas,id_pasar,minggu_ke,iph_kumulatif`
+    + `&order=nama_komoditas.asc,minggu_ke.asc`;
+
+  if (komoditas) url += `&id_komoditas=eq.${komoditas}`;
+  if (pasar) url += `&id_pasar=eq.${pasar}`;
+
+  const res = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`
+    }
+  });
+
+  const data = await res.json();
+  renderIphMingguanPerKomoditas(data);
+}
+function renderIphMingguanPerKomoditas(data) {
+  const container = document.getElementById('iphMingguan');
+  container.innerHTML = '';
+
+  if (!Array.isArray(data) || data.length === 0) {
+    container.innerHTML = '<div class="text-muted">Tidak ada data</div>';
+    return;
+  }
+
+  const totalMinggu = 5;
+
+  // =========================
+  // GROUP BY KOMODITAS
+  // =========================
+  const map = {};
+  data.forEach(d => {
+    if (!map[d.id_komoditas]) {
+      map[d.id_komoditas] = {
+        nama: d.nama_komoditas,
+        minggu: {}
+      };
+    }
+    map[d.id_komoditas].minggu[d.minggu_ke] = d.iph_kumulatif;
+  });
+
+  // =========================
+  // HEADER
+  // =========================
+  let html = `
+  <div class="table-responsive">
+  <table class="table table-bordered table-sm align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Komoditas</th>`;
+
+  for (let i = 1; i <= totalMinggu; i++) {
+    html += `<th class="text-end">Ke-${i}</th>`;
+  }
+
+  html += `</tr></thead><tbody>`;
+
+  // =========================
+  // BODY
+  // =========================
+  Object.values(map).forEach(row => {
+    html += `<tr><td>${row.nama}</td>`;
+
+    for (let i = 1; i <= totalMinggu; i++) {
+      const val = row.minggu[i];
+      html += `
+        <td class="text-end">
+          ${val ? formatRupiah(val) : '0'}
+        </td>`;
+    }
+
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
+}
+
 document.getElementById('btnTampil')
   .addEventListener('click', () => {
     loadHargaHarian();
@@ -223,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
