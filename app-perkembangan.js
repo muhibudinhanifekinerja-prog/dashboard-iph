@@ -34,6 +34,72 @@ async function loadHargaHarian() {
   const data = await res.json();
   renderTabelHargaHarian(data, bulan, tahun);
 }
+function renderTabelHargaHarian(data, bulan, tahun) {
+  const container = document.getElementById('hargaHarian');
+  container.innerHTML = '';
+
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="text-muted">Tidak ada data</div>';
+    return;
+  }
+
+  const totalHari = getJumlahHari(bulan, tahun);
+
+  // ===== GROUP DATA =====
+  const map = {};
+  data.forEach(d => {
+    const key = `${d.nama_komoditas}__${d.nama_pasar}`;
+    const tgl = new Date(d.tanggal).getDate();
+
+    if (!map[key]) {
+      map[key] = {
+        komoditas: d.nama_komoditas,
+        pasar: d.nama_pasar,
+        harga: {}
+      };
+    }
+    map[key].harga[tgl] = d.harga;
+  });
+
+  // ===== TABLE HEADER =====
+  let html = `
+  <div class="table-scroll-both">
+  <table class="table table-bordered table-sm align-middle">
+    <thead>
+      <tr>
+        <th class="sticky-col">No</th>
+        <th class="sticky-col">Komoditas</th>
+        <th class="sticky-col">Pasar</th>`;
+
+  for (let i = 1; i <= totalHari; i++) {
+    html += `<th class="text-center">${i}</th>`;
+  }
+
+  html += `</tr></thead><tbody>`;
+
+  // ===== TABLE BODY =====
+  let no = 1;
+  Object.values(map).forEach(row => {
+    html += `
+    <tr>
+      <td class="sticky-col text-center">${no++}</td>
+      <td class="sticky-col">${row.komoditas}</td>
+      <td class="sticky-col">${row.pasar}</td>`;
+
+    for (let i = 1; i <= totalHari; i++) {
+      const val = row.harga[i];
+      html += `
+        <td class="text-end">
+          ${val ? formatRupiah(val) : '-'}
+        </td>`;
+    }
+
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
+}
 
 async function loadFilterTahun() {
   try {
@@ -134,6 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
