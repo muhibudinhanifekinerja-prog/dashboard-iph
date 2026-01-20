@@ -105,6 +105,39 @@ async function loadFilterPasar() {
     console.error('Gagal load pasar:', err);
   }
 }
+async function loadHargaHarian() {
+  const komoditas = document.getElementById('filterKomoditas').value;
+  const pasar = document.getElementById('filterPasar').value;
+  const bulan = document.getElementById('filterBulan').value;
+  const tahun = document.getElementById('filterTahun').value;
+
+  const bulanPad = bulan.toString().padStart(2, '0');
+  const startDate = `${tahun}-${bulanPad}-01`;
+  const endDate = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
+
+  let url =
+    `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap`
+    + `?select=id_komoditas,nama_komoditas,id_pasar,nama_pasar,tanggal,harga`
+    + `&tanggal=gte.${startDate}`
+    + `&tanggal=lte.${endDate}`
+    + `&order=nama_komoditas.asc`
+    + `&order=nama_pasar.asc`
+    + `&order=tanggal.asc`;
+
+  if (komoditas) url += `&id_komoditas=eq.${komoditas}`;
+  if (pasar) url += `&id_pasar=eq.${pasar}`;
+
+  const data = await fetchSupabase(url, 'Harga Harian');
+
+  if (!Array.isArray(data)) {
+    document.getElementById('hargaHarian').innerHTML =
+      '<div class="text-danger">Gagal memuat data harga harian</div>';
+    return;
+  }
+
+  renderTabelHargaHarian(data);
+}
+
 document.getElementById('btnTampil')
   .addEventListener('click', () => {
     loadHargaHarian();
@@ -117,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
