@@ -298,8 +298,8 @@ function renderIphMingguanPerKomoditas(data) {
 document.getElementById('btnTampil')
   .addEventListener('click', () => {
     loadHargaHarian();
-    //loadIphMingguan();
-    //loadPerubahanMingguan();
+    loadIphMingguan();
+    loadPerubahanMingguan();
   });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -307,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
