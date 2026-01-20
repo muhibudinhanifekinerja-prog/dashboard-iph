@@ -194,12 +194,15 @@ async function loadFilterPasar() {
     console.error('Gagal load pasar:', err);
   }
 }
+document.getElementById('btnTampil')
+  .addEventListener('click', loadHargaHarian);
 
 document.addEventListener('DOMContentLoaded', () => {
   loadFilterTahun();
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
