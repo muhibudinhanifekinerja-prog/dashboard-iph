@@ -12,83 +12,6 @@ function getJumlahHari(bulan, tahun) {
 function formatRupiah(angka) {
   return 'Rp ' + Number(angka).toLocaleString('id-ID');
 }
-function renderTabelHargaHarian(data) {
-  const container = document.getElementById('hargaHarian');
-  container.innerHTML = '';
-
-  if (!Array.isArray(data)) {
-    container.innerHTML =
-      '<div class="text-danger">Data harga harian tidak valid</div>';
-    return;
-  }
-
-  if (data.length === 0) {
-    container.innerHTML =
-      '<div class="text-muted">Tidak ada data</div>';
-    return;
-  }
-}
-
-async function loadHargaHarian() {
-  const komoditas = document.getElementById('filterKomoditas').value;
-  const pasar = document.getElementById('filterPasar').value;
-  const bulan = document.getElementById('filterBulan').value;
-  const tahun = document.getElementById('filterTahun').value;
-
-  const bulanPad = bulan.toString().padStart(2, '0');
-  const startDate = `${tahun}-${bulanPad}-01`;
-  const endDate = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
-
-  let url =
-    `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap`
-    + `?select=id_komoditas,nama_komoditas,id_pasar,nama_pasar,tanggal,harga`
-    + `&tanggal=gte.${startDate}`
-    + `&tanggal=lte.${endDate}`
-    + `&order=nama_komoditas.asc`
-    + `&order=nama_pasar.asc`
-    + `&order=tanggal.asc`;
-
-  if (komoditas) url += `&id_komoditas=eq.${komoditas}`;
-  if (pasar) url += `&id_pasar=eq.${pasar}`;
-
-  try {
-    const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`
-      }
-    });
-
-    // 🔴 WAJIB: cek status HTTP
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error('Supabase error:', errText);
-      return;
-    }
-
-    const data = await res.json();
-
-    // 🔴 WAJIB: pastikan ARRAY
-    if (!Array.isArray(data)) {
-      console.error('Data bukan array:', data);
-      return;
-    }
-
-    renderTabelHargaHarian(data);
-
-  } catch (err) {
-    console.error('Error loadHargaHarian:', err);
-  }
-}
-
-    renderTabelHargaHarian(data);
-
-  } catch (err) {
-    console.error('Error loadHargaHarian:', err);
-  }
-}
-
-
 async function loadFilterTahun() {
   try {
     const res = await fetch(
@@ -194,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
