@@ -27,8 +27,6 @@ function renderTabelHargaHarian(data) {
       '<div class="text-muted">Tidak ada data</div>';
     return;
   }
-
-  // ... lanjut kode pivot (AMAN)
 }
 
 async function loadHargaHarian() {
@@ -196,6 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
