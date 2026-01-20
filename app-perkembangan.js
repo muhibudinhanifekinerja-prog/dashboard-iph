@@ -12,6 +12,25 @@ function getJumlahHari(bulan, tahun) {
 function formatRupiah(angka) {
   return 'Rp ' + Number(angka).toLocaleString('id-ID');
 }
+function renderTabelHargaHarian(data) {
+  const container = document.getElementById('hargaHarian');
+  container.innerHTML = '';
+
+  if (!Array.isArray(data)) {
+    container.innerHTML =
+      '<div class="text-danger">Data harga harian tidak valid</div>';
+    return;
+  }
+
+  if (data.length === 0) {
+    container.innerHTML =
+      '<div class="text-muted">Tidak ada data</div>';
+    return;
+  }
+
+  // ... lanjut kode pivot (AMAN)
+}
+
 async function loadHargaHarian() {
   const komoditas = document.getElementById('filterKomoditas').value;
   const pasar = document.getElementById('filterPasar').value;
@@ -24,7 +43,7 @@ async function loadHargaHarian() {
 
   let url =
     `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap`
-    + `?select=nama_komoditas,nama_pasar,tanggal,harga`
+    + `?select=id_komoditas,nama_komoditas,id_pasar,nama_pasar,tanggal,harga`
     + `&tanggal=gte.${startDate}`
     + `&tanggal=lte.${endDate}`
     + `&order=nama_komoditas.asc`
@@ -42,17 +61,27 @@ async function loadHargaHarian() {
       }
     });
 
+    // 🔴 WAJIB: cek status HTTP
     if (!res.ok) {
-      console.error(await res.text());
+      const errText = await res.text();
+      console.error('Supabase error:', errText);
       return;
     }
 
     const data = await res.json();
 
+    // 🔴 WAJIB: pastikan ARRAY
     if (!Array.isArray(data)) {
       console.error('Data bukan array:', data);
       return;
     }
+
+    renderTabelHargaHarian(data);
+
+  } catch (err) {
+    console.error('Error loadHargaHarian:', err);
+  }
+}
 
     renderTabelHargaHarian(data);
 
@@ -167,6 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
