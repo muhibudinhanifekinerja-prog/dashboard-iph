@@ -251,6 +251,7 @@ async function fetchSupabase(url, label = '') {
 document.getElementById('btnTampil')
   .addEventListener('click', () => {
     loadHargaHarian();
+    fetchSupabase();
     //loadIphMingguan();
     //loadPerubahanMingguan();
   });
@@ -260,6 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
