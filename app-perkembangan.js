@@ -41,6 +41,38 @@ async function loadFilterTahun() {
     console.error('Gagal load tahun:', err);
   }
 }
+async function loadFilterKomoditas() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/komoditas?select=id_komoditas,nama_komoditas&order=nama_komoditas.asc`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+      }
+    );
+
+    const data = await res.json();
+    const select = document.getElementById('filterKomoditas');
+
+    // reset
+    select.innerHTML = `<option value="">Semua Komoditas</option>`;
+
+    data.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.id_komoditas;
+      opt.textContent = d.nama_komoditas;
+      select.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error('Gagal load komoditas:', err);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadFilterTahun();
+  loadFilterKomoditas();
 });
+
