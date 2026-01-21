@@ -54,33 +54,50 @@
 
 <div class="container my-4">
 
-  <!-- RINGKASAN -->
   <div class="row g-3 mb-4">
-    <div class="col-md-6">
-      <div class="card shadow-sm border-danger">
-        <div class="card-body">
-          <div class="small-title">
-            <i class="bi bi-arrow-up-circle-fill text-danger me-1"></i>
-            Harga Naik berturut turut
-          </div>
-          <h5 id="komoditasNaik3" class="text-warning mb-0">–</h5>
-          <small id="detailNaik3" class="text-muted">–</small>
+  <!-- NAIK -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-danger">
+      <div class="card-body">
+        <div class="small-title">
+          <i class="bi bi-arrow-up-circle-fill text-danger me-1"></i>
+          Harga Naik Berturut-turut
         </div>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="card shadow-sm border-success">
-        <div class="card-body">
-          <div class="small-title">
-            <i class="bi bi-arrow-down-circle-fill text-success me-1"></i>
-            Komoditas Bergejolak
-          </div>
-          <h5 id="komoditasVolatil" class="text-danger mb-0">–</h5>
-          <small id="detailVolatil" class="text-muted">–</small>
-        </div>
+        <h5 id="komoditasNaik3" class="text-warning mb-0">–</h5>
+        <small id="detailNaik3" class="text-muted">–</small>
       </div>
     </div>
   </div>
+
+  <!-- TURUN (BARU) -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-success">
+      <div class="card-body">
+        <div class="small-title">
+          <i class="bi bi-arrow-down-circle-fill text-success me-1"></i>
+          Harga Turun Berturut-turut
+        </div>
+        <h5 id="komoditasTurun3" class="text-success mb-0">–</h5>
+        <small id="detailTurun3" class="text-muted">–</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- VOLATIL -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-warning">
+      <div class="card-body">
+        <div class="small-title">
+          <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
+          Komoditas Bergejolak
+        </div>
+        <h5 id="komoditasVolatil" class="text-danger mb-0">–</h5>
+        <small id="detailVolatil" class="text-muted">–</small>
+      </div>
+    </div>
+  </div>
+</div>
+
 
   <!-- TABEL 3 BULAN -->
   <div class="card shadow-sm mb-4">
@@ -123,3 +140,4 @@
 <script src="app-beranda.js"></script>
 </body>
 </html>
+
