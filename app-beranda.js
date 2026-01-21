@@ -44,7 +44,7 @@ async function loadNaik3BulanCard() {
 async function loadTurun3BulanCard() {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/v_turun_3_bulan_aktif?select=nama_komoditas,harga_m2,harga_m1,harga_m0,persen_m2_ke_m1,persen_m1_ke_m0&order=persen_m1_ke_m0.asc&limit=1`,
+      `${SUPABASE_URL}/rest/v1/v_turun_3_bulan_aktif?select=*`,
       {
         headers: {
           apikey: SUPABASE_KEY,
@@ -53,15 +53,23 @@ async function loadTurun3BulanCard() {
       }
     );
 
+    if (!res.ok) {
+      console.error('HTTP Error', res.status);
+      return;
+    }
+
     const data = await res.json();
 
     if (!data || data.length === 0) {
       document.getElementById('komoditasTurun3').textContent =
         'Tidak ada tren turun';
       document.getElementById('detailTurun3').textContent =
-        'Tidak ditemukan penurunan 3 bulan berturut-turut';
+        'Data tersedia, namun tidak lolos filter';
       return;
     }
+
+    // sorting manual (AMAN)
+    data.sort((a, b) => a.persen_m1_ke_m0 - b.persen_m1_ke_m0);
 
     const d = data[0];
 
@@ -78,6 +86,7 @@ async function loadTurun3BulanCard() {
     console.error('Error loadTurun3BulanCard:', err);
   }
 }
+
 
 // util rupiah
 function formatRupiah(value) {
@@ -296,5 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTabelRataBulanan();
   loadNarasiOtomatis();
 });
+
 
 
