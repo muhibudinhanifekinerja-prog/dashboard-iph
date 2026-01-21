@@ -291,8 +291,10 @@ async function loadNarasiOtomatis() {
 // panggil saat halaman siap
 document.addEventListener('DOMContentLoaded', () => {
   loadNaik3BulanCard();
+  loadTurun3BulanCard(); 
   loadVolatilitas30HariCard();
   loadTabelRataBulanan();
   loadNarasiOtomatis();
 });
+
 
