@@ -296,9 +296,95 @@ async function loadNarasiOtomatis() {
       'Analisis belum dapat ditampilkan.';
   }
 }
+// warna khusus inflasi YoY (target 2,5 ± 1)
+function clsYoY(value) {
+  if (value === null) return 'flat';
+  if (value < 1.5 || value > 3.5) return 'up';   // MERAH
+  return 'down';                                 // HIJAU (dalam target)
+}
+
+/*************************************************
+ * CARD INFLASI (NASIONAL, PROVINSI, KOTA)
+ *************************************************/
+/*************************************************
+ * CARD INFLASI (MTM + YTD + YOY)
+ *************************************************/
+async function loadCardInflasi() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/v_inflasi_terakhir?select=level_wilayah,nama_wilayah,inflasi_mtm,inflasi_ytd,inflasi_yoy,bulan,tahun`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+      }
+    );
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+    if (!data || data.length === 0) return;
+
+    const fmt = v => v !== null ? `${v.toFixed(2)}%` : '–';
+    const cls = v => v > 0 ? 'up' : v < 0 ? 'down' : 'flat';
+
+    const render = (d) => `
+    <div class="inflasi-box">
+      <div class="inflasi-item">
+        <span class="inflasi-label">Bulan ke Bulan (mtm)</span>
+        <span class="inflasi-value ${cls(d.inflasi_mtm)}">
+          ${fmt(d.inflasi_mtm)}
+        </span>
+      </div>
+      <div class="inflasi-item">
+        <span class="inflasi-label">Tahun Kalender (ytd)</span>
+        <span class="inflasi-value ${cls(d.inflasi_ytd)}">
+          ${fmt(d.inflasi_ytd)}
+        </span>
+      </div>
+      <div class="inflasi-item">
+        <span class="inflasi-label">Tahun ke Tahun (YoY)</span>
+        <span class="inflasi-value ${clsYoY(d.inflasi_yoy)}">
+          ${fmt(d.inflasi_yoy)}
+        </span>
+      </div>
+    </div>
+  `;
+
+
+    data.forEach(d => {
+      const bulanNama = new Date(d.tahun, d.bulan - 1)
+        .toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+
+      if (d.level_wilayah === 'nasional') {
+        document.getElementById('inflasi-nasional').innerHTML = render(d);
+        document.getElementById('inflasi-nasional-ket').textContent =
+          `Indonesia • ${bulanNama}`;
+      }
+
+      if (d.level_wilayah === 'provinsi' && d.nama_wilayah === 'Jawa Tengah') {
+        document.getElementById('inflasi-provinsi').innerHTML = render(d);
+        document.getElementById('inflasi-provinsi-ket').textContent =
+          `Jawa Tengah • ${bulanNama}`;
+      }
+
+      if (d.level_wilayah === 'kota' && d.nama_wilayah === 'Kota Tegal') {
+        document.getElementById('inflasi-kota').innerHTML = render(d);
+        document.getElementById('inflasi-kota-ket').textContent =
+          `Kota Tegal • ${bulanNama}`;
+      }
+    });
+
+  } catch (err) {
+    console.error('Error loadCardInflasi:', err);
+  }
+}
+
 
 // panggil saat halaman siap
 document.addEventListener('DOMContentLoaded', () => {
+  loadCardInflasi(); 
   loadNaik3BulanCard();
   loadTurun3BulanCard(); 
   loadVolatilitas30HariCard();
