@@ -171,8 +171,10 @@ function renderTable(level, data) {
 // GRAFIK INFLASI (NASIONAL, PROVINSI, KOTA)
 // =====================================================
 function renderChart(data) {
-  // label gabungan tahun-bulan
-  const labels = [...new Set(
+  const isMobile = window.innerWidth < 576;
+
+  // label gabungan bulan-tahun
+  let labels = [...new Set(
     data.map(d => `${namaBulan(d.bulan)} ${d.tahun}`)
   )];
 
@@ -192,49 +194,82 @@ function renderChart(data) {
     });
   }
 
+  let datasets = [
+    {
+      label: isMobile ? "NAS" : "Nasional",
+      data: series("nasional"),
+      borderWidth: isMobile ? 2 : 3,
+      tension: 0.3,
+      pointRadius: isMobile ? 2 : 4
+    },
+    {
+      label: isMobile ? "JATENG" : "Provinsi Jawa Tengah",
+      data: series("provinsi"),
+      borderWidth: isMobile ? 2 : 3,
+      tension: 0.3,
+      pointRadius: isMobile ? 2 : 4
+    },
+    {
+      label: isMobile ? "TEGAL" : "Kota Tegal",
+      data: series("kota", "Kota Tegal"),
+      borderWidth: isMobile ? 2 : 3,
+      tension: 0.3,
+      pointRadius: isMobile ? 2 : 4
+    }
+  ];
+
+  // 🔥 KHUSUS HP: tampilkan 6 bulan terakhir saja
+  if (isMobile && labels.length > 6) {
+    const start = labels.length - 6;
+    labels = labels.slice(start);
+    datasets = datasets.map(ds => ({
+      ...ds,
+      data: ds.data.slice(start)
+    }));
+  }
+
   if (chartInflasi) chartInflasi.destroy();
 
   chartInflasi = new Chart(el("chartInflasi"), {
     type: "line",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "Nasional",
-          data: series("nasional"),
-          borderWidth: 2,
-          tension: 0.3
-        },
-        {
-          label: "Provinsi Jawa Tengah",
-          data: series("provinsi"),
-          borderWidth: 2,
-          tension: 0.3
-        },
-        {
-          label: "Kota Tegal",
-          data: series("kota", "Kota Tegal"),
-          borderWidth: 2,
-          tension: 0.3
-        }
-      ]
-    },
+    data: { labels, datasets },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { position: "top" }
+        legend: {
+          position: "bottom",
+          labels: {
+            boxWidth: isMobile ? 10 : 14,
+            font: { size: isMobile ? 10 : 12 }
+          }
+        },
+        tooltip: {
+          bodyFont: { size: isMobile ? 11 : 13 },
+          titleFont: { size: isMobile ? 12 : 14 }
+        }
       },
       scales: {
+        x: {
+          ticks: {
+            maxRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: isMobile ? 6 : 12,
+            font: { size: isMobile ? 9 : 11 }
+          }
+        },
         y: {
           ticks: {
-            callback: val => val + "%"
+            callback: val => val + "%",
+            font: { size: isMobile ? 9 : 11 }
           }
         }
       }
     }
   });
 }
+
 
 // =====================================================
 // INIT
