@@ -43,8 +43,10 @@ async function loadData(tahun){
 
   const res = await fetch(url, { headers });
   cachedData = await res.json();
-
   renderRingkasan();
+  renderTable("nasional");
+  renderTable("provinsi");
+  renderTable("kota");
   renderChart();
 }
 
@@ -84,6 +86,46 @@ function renderRingkasan(){
     el("kota-ytd").textContent=num(k.inflasi_ytd);
     el("kota-yoy").textContent=num(k.inflasi_yoy);
   }
+}
+function renderTable(level) {
+  const tbody =
+    level === "nasional" ? el("tbodyNasional") :
+    level === "provinsi" ? el("tbodyProvinsi") :
+    el("tbodyKota");
+
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  const rows = cachedData.filter(d => {
+    const lvl = d.level_wilayah?.toLowerCase();
+    const wilayah = (d.nama_wilayah || "").toLowerCase();
+
+    if (level === "kota") {
+      return lvl === "kota" && wilayah.includes("tegal");
+    }
+    return lvl === level;
+  });
+
+  if (rows.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-center text-muted">
+          Tidak ada data
+        </td>
+      </tr>`;
+    return;
+  }
+
+  rows.forEach(d => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${BULAN[d.bulan - 1]} ${d.tahun}</td>
+        <td>${num(d.inflasi_mtm)}</td>
+        <td>${num(d.inflasi_ytd)}</td>
+        <td>${num(d.inflasi_yoy)}</td>
+      </tr>
+    `;
+  });
 }
 
 // ================= GRAFIK =================
@@ -142,4 +184,5 @@ document.addEventListener("DOMContentLoaded",()=>{
       renderChart();
     });
 });
+
 
