@@ -3,283 +3,133 @@
 // =====================================================
 const SUPABASE_URL = "https://hkllhgmfbnepgtfnrxuj.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhrbGxoZ21mYm5lcGd0Zm5yeHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxOTA1NzQsImV4cCI6MjA4Mjc2NjU3NH0.Ft8giYKJIPPiGstRJXJNb_uuKQUuNlaAM8p2dE2UKs0";
-let currentJenis = "yoy"; // yoy | mtm | ytd
-let cachedData = [];
-
 const headers = {
   apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`,
+  Authorization: `Bearer ${SUPABASE_KEY}`
 };
 
-// =====================================================
-// GLOBAL
-// =====================================================
 let chartInflasi = null;
+let currentJenis = "yoy";
+let cachedData = [];
 
-// =====================================================
-// UTIL
-// =====================================================
-function el(id) {
-  return document.getElementById(id);
-}
-
-function formatAngka(val) {
-  if (val === null || val === undefined) return "-";
-  return Number(val).toFixed(2);
-}
-
-const NAMA_BULAN = [
-  "Januari", "Februari", "Maret", "April",
-  "Mei", "Juni", "Juli", "Agustus",
-  "September", "Oktober", "November", "Desember"
+const BULAN = [
+  "Januari","Februari","Maret","April","Mei","Juni",
+  "Juli","Agustus","September","Oktober","November","Desember"
 ];
 
-function namaBulan(bulan) {
-  return NAMA_BULAN[bulan - 1] || bulan;
-}
+const el = id => document.getElementById(id);
+const num = v => v == null ? "-" : Number(v).toFixed(2);
 
-// =====================================================
-// LOAD TAHUN (DEFAULT = SEMUA)
-// =====================================================
-async function loadTahun() {
+// ================= LOAD TAHUN =================
+async function loadTahun(){
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/inflasi?select=tahun&order=tahun.asc`,
     { headers }
   );
-
-  if (!res.ok) {
-    console.error("Gagal ambil tahun:", await res.text());
-    return;
-  }
-
   const data = await res.json();
-  if (!Array.isArray(data)) return;
+  const tahun = [...new Set(data.map(d => d.tahun))];
 
-  const tahunUnik = [...new Set(data.map(d => d.tahun))];
+  el("filterTahun").innerHTML =
+    `<option value="all">Semua Tahun</option>` +
+    tahun.map(t => `<option value="${t}">${t}</option>`).join("");
 
-  const select = el("filterTahun");
-  select.innerHTML = `<option value="all">Semua Tahun</option>`;
-
-  tahunUnik.forEach(tahun => {
-    const opt = document.createElement("option");
-    opt.value = tahun;
-    opt.textContent = tahun;
-    select.appendChild(opt);
-  });
-
-  // default: semua tahun
-  loadDataTahun("all");
+  loadData("all");
 }
 
-// =====================================================
-// LOAD DATA BERDASARKAN TAHUN
-// =====================================================
-async function loadDataTahun(tahun) {
+// ================= LOAD DATA =================
+async function loadData(tahun){
   let url = `${SUPABASE_URL}/rest/v1/inflasi?select=*&order=tahun.asc,bulan.asc`;
-
-  if (tahun !== "all") {
-    url += `&tahun=eq.${tahun}`;
-  }
+  if(tahun !== "all") url += `&tahun=eq.${tahun}`;
 
   const res = await fetch(url, { headers });
+  cachedData = await res.json();
 
-  if (!res.ok) {
-    console.error("Gagal ambil data inflasi:", await res.text());
-    return;
-  }
-
-  const data = await res.json();
-  if (!Array.isArray(data)) return;
-  cachedData = data;
-  
-  renderRingkasan(data);
-  renderTable("nasional", data);
-  renderTable("provinsi", data);
-  renderTable("kota", data);
-  renderChart(data, currentJenis);
-
+  renderRingkasan();
+  renderChart();
 }
 
-// =====================================================
-// RINGKASAN CARD (AMBIL DATA TERBARU)
-// =====================================================
-function renderRingkasan(data) {
-  const last = (level, kota = null) =>
-    data
-      .filter(d =>
-        d.level_wilayah === level &&
-        (!kota || d.nama_wilayah === kota)
-      )
-      .slice(-1)[0];
+// ================= RINGKASAN =================
+function last(level, kota=null){
+  return cachedData
+    .filter(d => d.level_wilayah===level && (!kota||d.nama_wilayah===kota))
+    .slice(-1)[0];
+}
 
-  const nasional = last("nasional");
-  const provinsi = last("provinsi");
-  const kota = last("kota", "Kota Tegal");
+function renderRingkasan(){
+  const n = last("nasional");
+  const p = last("provinsi");
+  const k = last("kota","Kota Tegal");
 
-  if (nasional) {
-    el("nasional-mtm").textContent = formatAngka(nasional.inflasi_mtm);
-    el("nasional-ytd").textContent = formatAngka(nasional.inflasi_ytd);
-    el("nasional-yoy").textContent = formatAngka(nasional.inflasi_yoy);
+  if(n){
+    el("nasional-mtm").textContent=num(n.inflasi_mtm);
+    el("nasional-ytd").textContent=num(n.inflasi_ytd);
+    el("nasional-yoy").textContent=num(n.inflasi_yoy);
   }
-
-  if (provinsi) {
-    el("provinsi-mtm").textContent = formatAngka(provinsi.inflasi_mtm);
-    el("provinsi-ytd").textContent = formatAngka(provinsi.inflasi_ytd);
-    el("provinsi-yoy").textContent = formatAngka(provinsi.inflasi_yoy);
+  if(p){
+    el("provinsi-mtm").textContent=num(p.inflasi_mtm);
+    el("provinsi-ytd").textContent=num(p.inflasi_ytd);
+    el("provinsi-yoy").textContent=num(p.inflasi_yoy);
   }
-
-  if (kota) {
-    el("kota-mtm").textContent = formatAngka(kota.inflasi_mtm);
-    el("kota-ytd").textContent = formatAngka(kota.inflasi_ytd);
-    el("kota-yoy").textContent = formatAngka(kota.inflasi_yoy);
+  if(k){
+    el("kota-mtm").textContent=num(k.inflasi_mtm);
+    el("kota-ytd").textContent=num(k.inflasi_ytd);
+    el("kota-yoy").textContent=num(k.inflasi_yoy);
   }
 }
 
-// =====================================================
-// RENDER TABEL HISTORI
-// =====================================================
-function renderTable(level, data) {
-  const tbody =
-    level === "nasional" ? el("tbodyNasional") :
-    level === "provinsi" ? el("tbodyProvinsi") :
-    el("tbodyKota");
+// ================= GRAFIK =================
+function renderChart(){
+  const labels=[...new Set(cachedData.map(d=>`${BULAN[d.bulan-1]} ${d.tahun}`))];
 
-  tbody.innerHTML = "";
-
-  const filtered = data.filter(d =>
-    d.level_wilayah === level &&
-    (level !== "kota" || d.nama_wilayah === "Kota Tegal")
-  );
-
-  if (filtered.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="4" class="text-center text-muted">Data tidak tersedia</td>
-      </tr>`;
-    return;
-  }
-
-  filtered.forEach(d => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${namaBulan(d.bulan)} ${d.tahun}</td>
-        <td>${formatAngka(d.inflasi_mtm)}</td>
-        <td>${formatAngka(d.inflasi_ytd)}</td>
-        <td>${formatAngka(d.inflasi_yoy)}</td>
-      </tr>
-    `;
-  });
-}
-
-// =====================================================
-// GRAFIK INFLASI (NASIONAL, PROVINSI, KOTA)
-// =====================================================
-function renderChart(data, jenis) {
-
-  const labels = [...new Set(
-    data.map(d => `${namaBulan(d.bulan)} ${d.tahun}`)
-  )];
-
-  function ambilNilai(level, kota = null) {
-    return labels.map(label => {
-      const [bulanNama, tahun] = label.split(" ");
-      const bulan = NAMA_BULAN.indexOf(bulanNama) + 1;
-
-      const row = data.find(d =>
-        d.level_wilayah === level &&
-        d.tahun == tahun &&
-        d.bulan == bulan &&
-        (!kota || d.nama_wilayah === kota)
+  function series(level,kota=null){
+    return labels.map(l=>{
+      const [b,t]=l.split(" ");
+      const i=cachedData.find(d =>
+        d.level_wilayah===level &&
+        d.tahun==t &&
+        BULAN[d.bulan-1]===b &&
+        (!kota||d.nama_wilayah===kota)
       );
-
-      if (!row) return null;
-
-      if (jenis === "mtm") return row.inflasi_mtm;
-      if (jenis === "ytd") return row.inflasi_ytd;
-      return row.inflasi_yoy; // default yoy
+      if(!i) return null;
+      return currentJenis==="mtm"?i.inflasi_mtm:
+             currentJenis==="ytd"?i.inflasi_ytd:
+             i.inflasi_yoy;
     });
   }
 
-  if (chartInflasi) chartInflasi.destroy();
+  if(chartInflasi) chartInflasi.destroy();
 
-  chartInflasi = new Chart(el("chartInflasi"), {
-    type: "line",
-    data: {
+  chartInflasi=new Chart(el("chartInflasi"),{
+    type:"line",
+    data:{
       labels,
-      datasets: [
-        {
-          label: "Nasional",
-          data: ambilNilai("nasional"),
-          borderWidth: 2,
-          tension: 0.3
-        },
-        {
-          label: "Provinsi Jawa Tengah",
-          data: ambilNilai("provinsi"),
-          borderWidth: 2,
-          tension: 0.3
-        },
-        {
-          label: "Kota Tegal",
-          data: ambilNilai("kota", "Kota Tegal"),
-          borderWidth: 2,
-          tension: 0.3
-        }
+      datasets:[
+        {label:"Nasional",data:series("nasional"),borderWidth:2,tension:.3},
+        {label:"Provinsi Jawa Tengah",data:series("provinsi"),borderWidth:2,tension:.3},
+        {label:"Kota Tegal",data:series("kota","Kota Tegal"),borderWidth:2,tension:.3}
       ]
     },
-    options: {
-      responsive: true,
-      interaction: { mode: "index", intersect: false },
-      plugins: {
-        legend: { position: "top" },
-        title: {
-          display: true,
-          text:
-            jenis === "mtm" ? "Inflasi Bulan ke Bulan (MtM)" :
-            jenis === "ytd" ? "Inflasi Tahun Kalender (YTD)" :
-            "Inflasi Tahun ke Tahun (YoY)"
-        }
-      },
-      scales: {
-        y: {
-          ticks: {
-            callback: val => val + "%"
-          }
-        }
-      }
+    options:{
+      responsive:true,
+      interaction:{mode:"index",intersect:false},
+      scales:{y:{ticks:{callback:v=>v+"%"}}}
     }
   });
 }
 
+// ================= INIT =================
+document.addEventListener("DOMContentLoaded",()=>{
+  loadTahun();
+  el("filterTahun").addEventListener("change",e=>loadData(e.target.value));
 
-
-// =====================================================
-// INIT
-// =====================================================
-document.addEventListener("DOMContentLoaded", () => {
-
-  // event delegation untuk toggle grafik
-  const toggle = document.getElementById("toggleGrafik");
-
-  toggle.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-jenis]");
-    if (!btn) return;
-
-    // ubah tombol aktif
-    toggle.querySelectorAll("button").forEach(b => {
-      b.classList.remove("btn-primary");
-      b.classList.add("btn-outline-primary");
+  document.getElementById("toggleGrafik")
+    .addEventListener("click",e=>{
+      const btn=e.target.closest("button[data-jenis]");
+      if(!btn) return;
+      document.querySelectorAll("#toggleGrafik button")
+        .forEach(b=>b.classList.replace("btn-primary","btn-outline-primary"));
+      btn.classList.replace("btn-outline-primary","btn-primary");
+      currentJenis=btn.dataset.jenis;
+      renderChart();
     });
-
-    btn.classList.remove("btn-outline-primary");
-    btn.classList.add("btn-primary");
-
-    // ganti jenis grafik
-    currentJenis = btn.dataset.jenis;
-    renderChart(cachedData, currentJenis);
-  });
-
 });
-
-
-
