@@ -257,22 +257,29 @@ function renderChart(data, jenis) {
 // INIT
 // =====================================================
 document.addEventListener("DOMContentLoaded", () => {
-  loadTahun();
 
-  el("filterTahun").addEventListener("change", e => {
-    loadDataTahun(e.target.value);
-  });
-});
-document.querySelectorAll("[data-jenis]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document
-      .querySelectorAll("[data-jenis]")
-      .forEach(b => b.classList.remove("active"));
+  // event delegation untuk toggle grafik
+  const toggle = document.getElementById("toggleGrafik");
 
-    btn.classList.add("active");
+  toggle.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-jenis]");
+    if (!btn) return;
 
+    // ubah tombol aktif
+    toggle.querySelectorAll("button").forEach(b => {
+      b.classList.remove("btn-primary");
+      b.classList.add("btn-outline-primary");
+    });
+
+    btn.classList.remove("btn-outline-primary");
+    btn.classList.add("btn-primary");
+
+    // ganti jenis grafik
     currentJenis = btn.dataset.jenis;
     renderChart(cachedData, currentJenis);
   });
+
 });
+
+
 
