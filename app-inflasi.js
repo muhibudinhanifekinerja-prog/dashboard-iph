@@ -49,11 +49,20 @@ async function loadData(tahun){
 }
 
 // ================= RINGKASAN =================
-function last(level, kota=null){
-  return cachedData
-    .filter(d => d.level_wilayah===level && (!kota||d.nama_wilayah===kota))
-    .slice(-1)[0];
+function last(level, kota = null) {
+  const filtered = cachedData.filter(d => {
+    const lvl = d.level_wilayah?.toLowerCase();
+    const wilayah = d.nama_wilayah?.toLowerCase() || "";
+
+    if (kota) {
+      return lvl === level && wilayah.includes("tegal");
+    }
+    return lvl === level;
+  });
+
+  return filtered.length ? filtered[filtered.length - 1] : null;
 }
+
 
 function renderRingkasan(){
   const n = last("nasional");
@@ -133,3 +142,4 @@ document.addEventListener("DOMContentLoaded",()=>{
       renderChart();
     });
 });
+
