@@ -3,6 +3,8 @@
 // =====================================================
 const SUPABASE_URL = "https://hkllhgmfbnepgtfnrxuj.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhrbGxoZ21mYm5lcGd0Zm5yeHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxOTA1NzQsImV4cCI6MjA4Mjc2NjU3NH0.Ft8giYKJIPPiGstRJXJNb_uuKQUuNlaAM8p2dE2UKs0";
+let currentJenis = "yoy"; // yoy | mtm | ytd
+let cachedData = [];
 
 const headers = {
   apikey: SUPABASE_KEY,
@@ -88,12 +90,14 @@ async function loadDataTahun(tahun) {
 
   const data = await res.json();
   if (!Array.isArray(data)) return;
-
+  cachedData = data;
+  
   renderRingkasan(data);
   renderTable("nasional", data);
   renderTable("provinsi", data);
   renderTable("kota", data);
-  renderChart(data);
+  renderChart(data, currentJenis);
+
 }
 
 // =====================================================
@@ -170,15 +174,13 @@ function renderTable(level, data) {
 // =====================================================
 // GRAFIK INFLASI (NASIONAL, PROVINSI, KOTA)
 // =====================================================
-function renderChart(data) {
-  const isMobile = window.innerWidth < 576;
+function renderChart(data, jenis) {
 
-  // label gabungan bulan-tahun
-  let labels = [...new Set(
+  const labels = [...new Set(
     data.map(d => `${namaBulan(d.bulan)} ${d.tahun}`)
   )];
 
-  function series(level, kota = null) {
+  function ambilNilai(level, kota = null) {
     return labels.map(label => {
       const [bulanNama, tahun] = label.split(" ");
       const bulan = NAMA_BULAN.indexOf(bulanNama) + 1;
@@ -190,85 +192,65 @@ function renderChart(data) {
         (!kota || d.nama_wilayah === kota)
       );
 
-      return row ? row.inflasi_yoy : null;
+      if (!row) return null;
+
+      if (jenis === "mtm") return row.inflasi_mtm;
+      if (jenis === "ytd") return row.inflasi_ytd;
+      return row.inflasi_yoy; // default yoy
     });
-  }
-
-  let datasets = [
-    {
-      label: isMobile ? "NAS" : "Nasional",
-      data: series("nasional"),
-      borderWidth: isMobile ? 2 : 3,
-      tension: 0.3,
-      pointRadius: isMobile ? 2 : 4
-    },
-    {
-      label: isMobile ? "JATENG" : "Provinsi Jawa Tengah",
-      data: series("provinsi"),
-      borderWidth: isMobile ? 2 : 3,
-      tension: 0.3,
-      pointRadius: isMobile ? 2 : 4
-    },
-    {
-      label: isMobile ? "TEGAL" : "Kota Tegal",
-      data: series("kota", "Kota Tegal"),
-      borderWidth: isMobile ? 2 : 3,
-      tension: 0.3,
-      pointRadius: isMobile ? 2 : 4
-    }
-  ];
-
-  // 🔥 KHUSUS HP: tampilkan 6 bulan terakhir saja
-  if (isMobile && labels.length > 6) {
-    const start = labels.length - 6;
-    labels = labels.slice(start);
-    datasets = datasets.map(ds => ({
-      ...ds,
-      data: ds.data.slice(start)
-    }));
   }
 
   if (chartInflasi) chartInflasi.destroy();
 
   chartInflasi = new Chart(el("chartInflasi"), {
     type: "line",
-    data: { labels, datasets },
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Nasional",
+          data: ambilNilai("nasional"),
+          borderWidth: 2,
+          tension: 0.3
+        },
+        {
+          label: "Provinsi Jawa Tengah",
+          data: ambilNilai("provinsi"),
+          borderWidth: 2,
+          tension: 0.3
+        },
+        {
+          label: "Kota Tegal",
+          data: ambilNilai("kota", "Kota Tegal"),
+          borderWidth: 2,
+          tension: 0.3
+        }
+      ]
+    },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: {
-          position: "bottom",
-          labels: {
-            boxWidth: isMobile ? 10 : 14,
-            font: { size: isMobile ? 10 : 12 }
-          }
-        },
-        tooltip: {
-          bodyFont: { size: isMobile ? 11 : 13 },
-          titleFont: { size: isMobile ? 12 : 14 }
+        legend: { position: "top" },
+        title: {
+          display: true,
+          text:
+            jenis === "mtm" ? "Inflasi Bulan ke Bulan (MtM)" :
+            jenis === "ytd" ? "Inflasi Tahun Kalender (YTD)" :
+            "Inflasi Tahun ke Tahun (YoY)"
         }
       },
       scales: {
-        x: {
-          ticks: {
-            maxRotation: 0,
-            autoSkip: true,
-            maxTicksLimit: isMobile ? 6 : 12,
-            font: { size: isMobile ? 9 : 11 }
-          }
-        },
         y: {
           ticks: {
-            callback: val => val + "%",
-            font: { size: isMobile ? 9 : 11 }
+            callback: val => val + "%"
           }
         }
       }
     }
   });
 }
+
 
 
 // =====================================================
@@ -281,3 +263,16 @@ document.addEventListener("DOMContentLoaded", () => {
     loadDataTahun(e.target.value);
   });
 });
+document.querySelectorAll("[data-jenis]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document
+      .querySelectorAll("[data-jenis]")
+      .forEach(b => b.classList.remove("active"));
+
+    btn.classList.add("active");
+
+    currentJenis = btn.dataset.jenis;
+    renderChart(cachedData, currentJenis);
+  });
+});
+
