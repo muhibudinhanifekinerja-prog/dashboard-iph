@@ -360,6 +360,39 @@ async function fetchSupabase(url, label = '') {
     return null;
   }
 }
+function renderIphKumulatif(data) {
+  const tbody = document.querySelector('#tabelIphMingguan tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  const map = {};
+
+  data.forEach(row => {
+    if (!map[row.id_komoditas]) {
+      map[row.id_komoditas] = {
+        nama: row.nama_komoditas,
+        minggu: {}
+      };
+    }
+    map[row.id_komoditas].minggu[row.minggu_ke] = row.iph_mingguan;
+  });
+
+  let no = 1;
+  Object.values(map).forEach(item => {
+    let tr = `<tr>
+      <td>${no++}</td>
+      <td>${item.nama}</td>`;
+
+    for (let i = 1; i <= 4; i++) {
+      tr += `<td>${item.minggu[i] ?? '-'}</td>`;
+    }
+
+    tr += `</tr>`;
+    tbody.insertAdjacentHTML('beforeend', tr);
+  });
+}
+
 function loadPerubahanMingguan() {
   const komoditasId = document.getElementById('filterKomoditas').value;
   const bulan = document.getElementById('filterBulan').value;
@@ -395,6 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
