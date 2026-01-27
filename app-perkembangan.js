@@ -179,17 +179,14 @@ async function loadIphMingguan() {
     }
 
     const res = await fetch(url, { headers: supabaseHeaders });
-    if (!res.ok) throw new Error('Gagal load IPH kumulatif');
-
     const data = await res.json();
 
-    // 🔑 INI BARIS KRITIS
-    renderIphKumulatif(data);
-
-  } catch (err) {
-    console.error('loadIphMingguan error:', err);
+    renderIphKumulatif(data); // ✅ SATU-SATUNYA RENDER
+  } catch (e) {
+    console.error(e);
   }
 }
+
 
 
 async function loadFilterTahun() {
@@ -425,6 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
