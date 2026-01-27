@@ -153,6 +153,12 @@ function loadPerubahanMingguan() {
   .catch(err => {
     console.error('Gagal load perubahan IPH', err);
   });
+  const res = await fetch(url, { headers: supabaseHeaders });
+    if (!res.ok) {
+      console.warn('Perubahan IPH belum tersedia');
+      return;
+    }
+
 }
 
 function setJudulPerubahan() {
@@ -423,7 +429,7 @@ document.getElementById('btnTampil')
   .addEventListener('click', () => {
     loadHargaHarian();
     loadIphMingguan();
-    //loadPerubahanMingguan();
+    loadPerubahanMingguan();
     //setJudulPerubahan();
   });
 document.addEventListener('DOMContentLoaded', () => {
@@ -431,6 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
