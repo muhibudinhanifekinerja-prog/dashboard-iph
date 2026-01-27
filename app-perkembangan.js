@@ -465,31 +465,29 @@ async function fetchSupabase(url, label = '') {
     return null;
   }
 }
-async function loadPerubahanMingguan() {
-  const tahun = document.getElementById('filterTahun').value;
+function loadPerubahanMingguan() {
+  const komoditasId = document.getElementById('filterKomoditas').value;
   const bulan = document.getElementById('filterBulan').value;
-  const komoditas = document.getElementById('filterKomoditas').value;
-  const pasar = document.getElementById('filterPasar').value;
+  const tahun = document.getElementById('filterTahun').value;
 
-  if (!tahun || !bulan) {
-    document.getElementById('perubahanPersen').innerHTML =
-      '<p class="text-muted">Pilih bulan dan tahun</p>';
-    return;
+  let url = `${SUPABASE_URL}/rest/v1/v_iph_perubahan_mingguan`
+          + `?tahun=eq.${tahun}&bulan=eq.${bulan}`;
+
+  // 🔑 FILTER KOMODITAS
+  if (komoditasId && komoditasId !== 'all') {
+    url += `&id_komoditas=eq.${komoditasId}`;
   }
 
-  let url = `${SUPABASE_URL}/rest/v1/v_iph_perubahan_mingguan?select=*`;
-
-  url += `&tahun=eq.${tahun}`;
-  url += `&bulan=eq.${bulan}`;
-
-  if (komoditas) url += `&id_komoditas=eq.${komoditas}`;
-  if (pasar) url += `&id_pasar=eq.${pasar}`;
-
-  url += `&order=minggu_ke.asc`;
-
-  const data = await fetchSupabase(url, 'Perubahan IPH Mingguan');
-  renderPerubahanMingguan(data || []);
+  fetch(url, {
+    headers: supabaseHeaders
+  })
+  .then(res => res.json())
+  .then(data => renderPerubahanIph(data))
+  .catch(err => {
+    console.error('Gagal load perubahan IPH', err);
+  });
 }
+
 document.getElementById('btnTampil')
   .addEventListener('click', () => {
     loadHargaHarian();
@@ -502,6 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
