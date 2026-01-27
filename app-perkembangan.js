@@ -84,87 +84,45 @@ function renderTabelHargaHarian(data) {
   html += `</tbody></table></div>`;
   container.innerHTML = html;
 }
-function renderIphMingguan(data) {
-  const container = document.getElementById('iphMingguan');
+function renderPerubahanIph(data) {
+  const container = document.getElementById('tabelPerubahanIph');
+  if (!container) return;
 
-  if (!data.length) {
-    container.innerHTML = `<p class="text-muted">Tidak ada data IPH mingguan</p>`;
+  if (!data || data.length === 0) {
+    container.innerHTML = '<em>Tidak ada data perubahan</em>';
     return;
   }
 
-  // ===============================
-  // 1. Pivot data per komoditas
-  // ===============================
-  const map = {};
-  let maxMinggu = 0;
+  let html = `<table class="table table-sm table-bordered">
+    <thead>
+      <tr>
+        <th>Komoditas</th>
+        <th>Minggu</th>
+        <th>% Perubahan</th>
+      </tr>
+    </thead><tbody>`;
 
   data.forEach(row => {
-    if (!map[row.id_komoditas]) {
-      map[row.id_komoditas] = {
-        nama: row.nama_komoditas,
-        minggu: {}
-      };
-    }
-    map[row.id_komoditas].minggu[row.minggu_ke] = row.iph_mingguan;
-    if (row.minggu_ke > maxMinggu) maxMinggu = row.minggu_ke;
-  });
+    let warna = '';
+    if (row.persen_perubahan > 0) warna = 'text-danger';
+    if (row.persen_perubahan < 0) warna = 'text-success';
 
-  // Batasi maksimal M5
-  maxMinggu = Math.min(maxMinggu, 5);
-
-  // ===============================
-  // 2. Header tabel
-  // ===============================
-  let html = `
-    <table class="table table-bordered table-sm text-center">
-      <thead class="table-light">
-        <tr>
-          <th style="width:50px">No</th>
-          <th class="text-start">Komoditas</th>
-  `;
-
-  for (let i = 1; i <= maxMinggu; i++) {
-    html += `<th>M${i}</th>`;
-  }
-
-  html += `
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  // ===============================
-  // 3. Body tabel
-  // ===============================
-  let no = 1;
-  Object.values(map).forEach(item => {
     html += `
       <tr>
-        <td>${no++}</td>
-        <td class="text-start">${item.nama}</td>
-    `;
-
-    for (let i = 1; i <= maxMinggu; i++) {
-      const val = item.minggu[i];
-      html += `
-        <td>
-          ${val !== undefined && val !== null
-            ? Number(val).toLocaleString('id-ID')
+        <td>${row.nama_komoditas}</td>
+        <td>M${row.minggu_ke}</td>
+        <td class="${warna}">
+          ${row.persen_perubahan !== null
+            ? row.persen_perubahan + ' %'
             : '-'}
         </td>
-      `;
-    }
-
-    html += `</tr>`;
+      </tr>`;
   });
 
-  html += `
-      </tbody>
-    </table>
-  `;
-
+  html += '</tbody></table>';
   container.innerHTML = html;
 }
+
 function renderPerubahanMingguan(data) {
   const container = document.getElementById('perubahanPersen');
 
@@ -500,6 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
