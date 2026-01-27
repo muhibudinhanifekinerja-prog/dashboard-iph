@@ -490,21 +490,19 @@ async function loadPerubahanMingguan() {
   const data = await fetchSupabase(url, 'Perubahan IPH Mingguan');
   renderPerubahanMingguan(data || []);
 }
-
 document.getElementById('btnTampil')
   .addEventListener('click', () => {
     loadHargaHarian();
-    fetchSupabase();
     loadIphMingguan();
     loadPerubahanMingguan();
     setJudulPerubahan();
   });
-
 document.addEventListener('DOMContentLoaded', () => {
   loadFilterTahun();
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
