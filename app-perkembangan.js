@@ -366,6 +366,11 @@ function renderIphKumulatif(data) {
 
   tbody.innerHTML = '';
 
+  if (!data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6">Tidak ada data</td></tr>';
+    return;
+  }
+
   const map = {};
 
   data.forEach(row => {
@@ -384,36 +389,31 @@ function renderIphKumulatif(data) {
       <td>${no++}</td>
       <td>${item.nama}</td>`;
 
-    for (let i = 1; i <= 4; i++) {
-      tr += `<td>${item.minggu[i] ?? '-'}</td>`;
+    for (let m = 1; m <= 4; m++) {
+      tr += `<td>${item.minggu[m] ?? '-'}</td>`;
     }
 
-    tr += `</tr>`;
+    tr += '</tr>';
     tbody.insertAdjacentHTML('beforeend', tr);
   });
 }
 
 function loadPerubahanMingguan() {
-  const komoditasId = document.getElementById('filterKomoditas').value;
   const bulan = document.getElementById('filterBulan').value;
   const tahun = document.getElementById('filterTahun').value;
+  const komoditas = document.getElementById('filterKomoditas').value;
 
   let url = `${SUPABASE_URL}/rest/v1/v_iph_perubahan_mingguan`
           + `?tahun=eq.${tahun}&bulan=eq.${bulan}`;
 
-  // 🔑 FILTER KOMODITAS
-  if (komoditasId && komoditasId !== 'all') {
-    url += `&id_komoditas=eq.${komoditasId}`;
+  if (komoditas && komoditas !== 'all') {
+    url += `&id_komoditas=eq.${komoditas}`;
   }
 
-  fetch(url, {
-    headers: supabaseHeaders
-  })
-  .then(res => res.json())
-  .then(data => renderPerubahanIph(data))
-  .catch(err => {
-    console.error('Gagal load perubahan IPH', err);
-  });
+  fetch(url, { headers: supabaseHeaders })
+    .then(res => res.json())
+    .then(data => renderPerubahanIph(data))
+    .catch(err => console.error('Gagal load perubahan IPH', err));
 }
 
 document.getElementById('btnTampil')
@@ -428,6 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
