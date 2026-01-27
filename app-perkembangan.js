@@ -7,6 +7,15 @@ const DEBUG_SUPABASE = true;
 /*************************************************
  * HELPER
  *************************************************/
+// ================================
+// SUPABASE HEADERS (WAJIB GLOBAL)
+// ================================
+const supabaseHeaders = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json'
+};
+
 function getJumlahHari(bulan, tahun) {
   return new Date(tahun, bulan, 0).getDate();
 }
@@ -422,6 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
