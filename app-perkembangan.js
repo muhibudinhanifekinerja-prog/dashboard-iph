@@ -123,90 +123,27 @@ function renderPerubahanIph(data) {
   container.innerHTML = html;
 }
 
-function renderPerubahanMingguan(data) {
-  const container = document.getElementById('perubahanPersen');
+function loadPerubahanMingguan() {
+  const komoditasId = document.getElementById('filterKomoditas').value;
+  const bulan = document.getElementById('filterBulan').value;
+  const tahun = document.getElementById('filterTahun').value;
 
-  if (!data.length) {
-    container.innerHTML = `<p class="text-muted">Tidak ada data perubahan</p>`;
-    return;
+  let url = `${SUPABASE_URL}/rest/v1/v_iph_perubahan_mingguan`
+          + `?tahun=eq.${tahun}&bulan=eq.${bulan}`;
+
+  // 🔑 FILTER KOMODITAS
+  if (komoditasId && komoditasId !== 'all') {
+    url += `&id_komoditas=eq.${komoditasId}`;
   }
 
-  // ===============================
-  // 1. Pivot data per komoditas
-  // ===============================
-  const map = {};
-  let maxMinggu = 0;
-
-  data.forEach(row => {
-    if (!map[row.id_komoditas]) {
-      map[row.id_komoditas] = {
-        nama: row.nama_komoditas,
-        minggu: {}
-      };
-    }
-    map[row.id_komoditas].minggu[row.minggu_ke] = row.perubahan_persen;
-    if (row.minggu_ke > maxMinggu) maxMinggu = row.minggu_ke;
+  fetch(url, {
+    headers: supabaseHeaders
+  })
+  .then(res => res.json())
+  .then(data => renderPerubahanIph(data))
+  .catch(err => {
+    console.error('Gagal load perubahan IPH', err);
   });
-
-  maxMinggu = Math.min(maxMinggu, 5);
-
-  // ===============================
-  // 2. Header tabel
-  // ===============================
-  let html = `
-    <table class="table table-bordered table-sm text-center">
-      <thead class="table-light">
-        <tr>
-          <th style="width:50px">No</th>
-          <th class="text-start">Komoditas</th>
-  `;
-
-  for (let i = 1; i <= maxMinggu; i++) {
-    html += `<th>M${i}</th>`;
-  }
-
-  html += `
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  // ===============================
-  // 3. Body tabel
-  // ===============================
-  let no = 1;
-  Object.values(map).forEach(item => {
-    html += `
-      <tr>
-        <td>${no++}</td>
-        <td class="text-start">${item.nama}</td>
-    `;
-
-    for (let i = 1; i <= maxMinggu; i++) {
-      const val = item.minggu[i];
-
-      let cls = '';
-      if (val > 0) cls = 'text-danger';
-      else if (val < 0) cls = 'text-success';
-
-      html += `
-        <td class="${cls}">
-          ${val !== undefined && val !== null
-            ? `${val.toFixed(2)}%`
-            : '-'}
-        </td>
-      `;
-    }
-
-    html += `</tr>`;
-  });
-
-  html += `
-      </tbody>
-    </table>
-  `;
-
-  container.innerHTML = html;
 }
 
 function setJudulPerubahan() {
@@ -458,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
