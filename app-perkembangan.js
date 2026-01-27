@@ -494,14 +494,15 @@ document.getElementById('btnTampil')
   .addEventListener('click', () => {
     loadHargaHarian();
     loadIphMingguan();
-    loadPerubahanMingguan();
-    setJudulPerubahan();
+    //loadPerubahanMingguan();
+    //setJudulPerubahan();
   });
 document.addEventListener('DOMContentLoaded', () => {
   loadFilterTahun();
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
