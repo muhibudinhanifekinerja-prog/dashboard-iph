@@ -276,7 +276,7 @@ async function loadIphMingguan() {
   const komoditas = document.getElementById('filterKomoditas').value;
   const pasar = document.getElementById('filterPasar').value;
 
-  let url = `${SUPABASE_URL}/rest/v1/v_iph_mingguan?select=*`;
+  let url = `${SUPABASE_URL}/rest/v1/v_iph_mingguan_kumulatif?select=*`;
 
   if (tahun) url += `&tahun=eq.${tahun}`;
   if (bulan) url += `&bulan=eq.${bulan}`;
@@ -502,6 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
