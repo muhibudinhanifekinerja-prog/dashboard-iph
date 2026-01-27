@@ -182,6 +182,8 @@ async function loadIphMingguan() {
     if (!res.ok) throw new Error('Gagal load IPH kumulatif');
 
     const data = await res.json();
+
+    // 🔑 INI BARIS KRITIS
     renderIphKumulatif(data);
 
   } catch (err) {
@@ -392,6 +394,7 @@ function renderIphKumulatif(data) {
   });
 }
 
+
 function loadPerubahanMingguan() {
   const bulan = document.getElementById('filterBulan').value;
   const tahun = document.getElementById('filterTahun').value;
@@ -422,6 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
