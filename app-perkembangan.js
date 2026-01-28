@@ -507,6 +507,7 @@ document.getElementById('btnTampil')
     loadHargaHarian();
     loadIphMingguan();
     loadPerubahanMingguan();
+    loadPerubahanIPH();
     //setJudulPerubahan();
   });
 document.addEventListener('DOMContentLoaded', () => {
@@ -515,6 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterPasar();
   initFilterTahun();
 });
+
 
 
 
