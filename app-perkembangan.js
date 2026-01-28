@@ -411,58 +411,39 @@ async function fetchSupabase(url, label = '') {
 }
 function renderIphKumulatif(data) {
   const container = document.getElementById('iphMingguan');
-  if (!container) {
-    console.error('#iphMingguan tidak ditemukan');
-    return;
-  }
+  if (!container) return;
 
   container.innerHTML = '';
 
-  if (!Array.isArray(data) || data.length === 0) {
+  if (!data || data.length === 0) {
     container.innerHTML = '<div class="text-muted">Tidak ada data</div>';
     return;
   }
 
-  // =========================
-  // 1. TENTUKAN JUMLAH MINGGU (M4 / M5)
-  // =========================
+  // jumlah minggu dinamis (M4 / M5)
   const maxMinggu = Math.max(...data.map(d => d.minggu_ke));
 
-  // =========================
-  // 2. GROUP DATA PER KOMODITAS
-  // =========================
+  // group per komoditas
   const grouped = {};
-  data.forEach(row => {
-    const nama = row.nama_komoditas;
-
-    if (!grouped[nama]) {
-      grouped[nama] = {};
-    }
-
-    grouped[nama][row.minggu_ke] = row.iph_mingguan;
+  data.forEach(d => {
+    if (!grouped[d.nama_komoditas]) grouped[d.nama_komoditas] = {};
+    grouped[d.nama_komoditas][d.minggu_ke] = d.iph_mingguan;
   });
 
-  // =========================
-  // 3. BANGUN TABEL DINAMIS
-  // =========================
   let html = `
     <div class="table-scroll-both">
-    <table class="table table-bordered table-sm table-hover">
-      <thead>
-        <tr>
-          <th class="sticky-col">No</th>
-          <th class="sticky-col-2">Komoditas</th>
+      <table class="table table-bordered table-sm table-hover">
+        <thead>
+          <tr>
+            <th class="sticky-col">No</th>
+            <th class="sticky-col-2">Komoditas</th>
   `;
 
   for (let m = 1; m <= maxMinggu; m++) {
     html += `<th>M${m}</th>`;
   }
 
-  html += `
-        </tr>
-      </thead>
-      <tbody>
-  `;
+  html += `</tr></thead><tbody>`;
 
   let no = 1;
   Object.keys(grouped).forEach(nama => {
@@ -479,15 +460,9 @@ function renderIphKumulatif(data) {
     html += `</tr>`;
   });
 
-  html += `
-      </tbody>
-    </table>
-    </div>
-  `;
-
+  html += `</tbody></table></div>`;
   container.innerHTML = html;
 }
-
 
 function loadPerubahanMingguan() {
   const bulan = document.getElementById('filterBulan').value;
@@ -520,6 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterPasar();
   initFilterTahun();
 });
+
 
 
 
