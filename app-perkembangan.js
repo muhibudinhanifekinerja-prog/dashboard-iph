@@ -229,7 +229,13 @@ function renderIph(data) {
         <td>${k}</td>`;
 
     for (let i = 1; i <= maxM; i++) {
-      html += `<td class="text-end">${formatRupiah(grp[k][i])}</td>`;
+      const val = grp[k][i];
+      html += `
+        <td class="text-end">
+          ${val !== undefined && val !== null
+            ? formatRupiah(val)
+            : '-'}
+        </td>`;
     }
 
     html += `</tr>`;
@@ -238,23 +244,6 @@ function renderIph(data) {
   html += `</tbody></table></div>`;
   el.innerHTML = html;
 }
-
-/*************************************************
- * PERUBAHAN MINGGUAN (PIVOT)
- *************************************************/
-async function loadPerubahanMingguan() {
-  const bulan = filterBulan.value;
-  const tahun = getSelectedTahun();
-
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/v_iph_perubahan_mingguan?tahun=eq.${tahun}&bulan=eq.${bulan}`,
-    { headers }
-  );
-
-  const data = await res.json();
-  renderPerubahanMingguan(data);
-}
-
 function renderPerubahanMingguan(data) {
   const el = document.getElementById('perubahanPersen');
   el.innerHTML = '';
@@ -310,3 +299,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
