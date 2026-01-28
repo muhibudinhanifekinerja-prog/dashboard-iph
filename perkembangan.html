@@ -11,107 +11,58 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
   <style>
-    body { background:#f4f6fa; }
-    .section-title { font-weight:600; }
-    <style>
-  /* wrapper scroll horizontal */
-  .table-scroll-x {
+  body { background:#f4f6fa; }
+  .section-title { font-weight:600; }
+
+  /* ===== TABLE IPH & HARIAN ===== */
+  .table-scroll-both {
+    max-height: 420px;
+    overflow-y: auto;
     overflow-x: auto;
     position: relative;
   }
 
-  /* freeze kolom */
-  th.sticky-col,
-  td.sticky-col {
+  .table-scroll-both table {
+    table-layout: fixed;
+    min-width: 900px;
+  }
+
+  /* Sticky kolom NO */
+  .sticky-col {
     position: sticky;
     left: 0;
     background: #fff;
-    z-index: 2;
-  }
-
-  th.sticky-col-2,
-  td.sticky-col-2 {
-    position: sticky;
-    left: 200px; /* lebar kolom pertama */
-    background: #fff;
-    z-index: 2;
-  }
-
-  thead th {
     z-index: 3;
-    background: #f8f9fa;
+    min-width: 50px;
+    text-align: center;
   }
-  /* wrapper untuk scroll dua arah */
-.table-scroll-both {
-  max-height: 420px;      /* scroll vertikal */
-  overflow-y: auto;
-  overflow-x: auto;       /* scroll horizontal */
-  position: relative;
-}
 
-/* freeze kolom komoditas (opsional tapi direkomendasikan) */
-.sticky-col {
-  position: sticky;
-  left: 0;
-  background: #fff;
-  z-index: 2;
-}
+  /* Sticky kolom KOMODITAS */
+  .sticky-col-2 {
+    position: sticky;
+    left: 50px;
+    background: #fff;
+    z-index: 3;
+    min-width: 220px;
+    white-space: nowrap;
+  }
 
-/* header tetap di atas */
-.table-scroll-both thead th {
-  position: sticky;
-  top: 0;
-  background: #f8f9fa;
-  z-index: 3;
-}
-/* ===== TABLE IPH MINGGUAN ===== */
-.table-scroll-both {
-  overflow-x: auto;
-  position: relative;
-}
+  /* Kolom minggu */
+  .table-scroll-both th,
+  .table-scroll-both td {
+    min-width: 110px;
+    white-space: nowrap;
+    text-align: right;
+  }
 
-.table-scroll-both table {
-  table-layout: fixed;
-  min-width: 900px;
-}
-
-/* Kolom No */
-.sticky-col {
-  position: sticky;
-  left: 0;
-  background: #fff;
-  z-index: 3;
-  min-width: 50px;
-  text-align: center;
-}
-
-/* Kolom Komoditas */
-.sticky-col-2 {
-  position: sticky;
-  left: 50px;
-  background: #fff;
-  z-index: 3;
-  min-width: 220px;
-  white-space: nowrap;
-}
-
-/* Kolom Mingguan */
-.table-scroll-both th,
-.table-scroll-both td {
-  min-width: 100px;
-  text-align: right;
-  white-space: nowrap;
-}
-
-/* Header */
-.table-scroll-both thead th {
-  background: #f8f9fa;
-  z-index: 4;
-}
-
+  .table-scroll-both thead th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 4;
+  }
 </style>
 
-  </style>
 </head>
 
 <body>
@@ -276,4 +227,5 @@
 
 </body>
 </html>
+
 
