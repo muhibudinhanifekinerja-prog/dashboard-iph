@@ -14,53 +14,57 @@
   body { background:#f4f6fa; }
   .section-title { font-weight:600; }
 
-  /* ===== TABLE IPH & HARIAN ===== */
-  .table-scroll-both {
-    max-height: 420px;
-    overflow-y: auto;
-    overflow-x: auto;
-    position: relative;
-  }
+  /* ===== GLOBAL TABLE FIX ===== */
+.table-responsive,
+.table-scroll-both {
+  overflow-x: auto;
+  position: relative;
+}
 
-  .table-scroll-both table {
-    table-layout: fixed;
-    min-width: 900px;
-  }
+table {
+  table-layout: fixed;
+  border-collapse: collapse;
+}
 
-  /* Sticky kolom NO */
-  .sticky-col {
-    position: sticky;
-    left: 0;
-    background: #fff;
-    z-index: 3;
-    min-width: 50px;
-    text-align: center;
-  }
+th, td {
+  white-space: nowrap;
+  vertical-align: middle;
+}
 
-  /* Sticky kolom KOMODITAS */
-  .sticky-col-2 {
-    position: sticky;
-    left: 50px;
-    background: #fff;
-    z-index: 3;
-    min-width: 220px;
-    white-space: nowrap;
-  }
+/* ===== STICKY COL ===== */
+.sticky-col {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 3;
+  min-width: 50px;
+  text-align: center;
+}
 
-  /* Kolom minggu */
-  .table-scroll-both th,
-  .table-scroll-both td {
-    min-width: 110px;
-    white-space: nowrap;
-    text-align: right;
-  }
+.sticky-col-2 {
+  position: sticky;
+  left: 50px;
+  background: #fff;
+  z-index: 3;
+  min-width: 220px;
+  text-align: left;
+}
 
-  .table-scroll-both thead th {
-    position: sticky;
-    top: 0;
-    background: #f8f9fa;
-    z-index: 4;
-  }
+/* ===== HARGA COLUMN ===== */
+.harga-cell {
+  min-width: 110px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== HEADER ===== */
+thead th {
+  background: #f8f9fa;
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+
 </style>
 
 </head>
@@ -227,5 +231,6 @@
 
 </body>
 </html>
+
 
 
