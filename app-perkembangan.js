@@ -244,6 +244,7 @@ document.getElementById('btnTampil').onclick = () => {
   loadHargaHarian();
   loadIphMingguan();
   loadPerubahanMingguan();
+  console.log('loadPerubahanMingguan EXIST:', typeof loadPerubahanMingguan);
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -251,3 +252,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
