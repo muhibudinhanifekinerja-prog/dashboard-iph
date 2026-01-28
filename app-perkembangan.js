@@ -407,54 +407,28 @@ async function fetchSupabase(url, label = '') {
   }
 }
 function renderIphKumulatif(data) {
-  const table = document.getElementById('tabelIphMingguan');
-  if (!table) {
-    console.error('Tabel IPH Mingguan tidak ditemukan');
+  const container = document.getElementById('iphMingguan');
+  if (!container) {
+    console.error('#iphMingguan tidak ditemukan');
     return;
   }
 
-  const thead = table.querySelector('thead');
-  const tbody = table.querySelector('tbody');
-
-  if (!thead || !tbody) {
-    console.error('thead / tbody tidak ditemukan');
-    return;
-  }
-
-  tbody.innerHTML = '';
-  thead.innerHTML = '';
+  container.innerHTML = '';
 
   if (!Array.isArray(data) || data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="2">Tidak ada data</td></tr>';
+    container.innerHTML = '<div class="text-muted">Tidak ada data</div>';
     return;
   }
 
   // =========================
-  // 1. CARI JUMLAH MINGGU (M4 / M5)
+  // 1. TENTUKAN JUMLAH MINGGU (M4 / M5)
   // =========================
   const maxMinggu = Math.max(...data.map(d => d.minggu_ke));
 
   // =========================
-  // 2. BANGUN HEADER DINAMIS
-  // =========================
-  let headerHtml = `
-    <tr>
-      <th>No</th>
-      <th>Komoditas</th>
-  `;
-
-  for (let m = 1; m <= maxMinggu; m++) {
-    headerHtml += `<th>M${m}</th>`;
-  }
-
-  headerHtml += '</tr>';
-  thead.innerHTML = headerHtml;
-
-  // =========================
-  // 3. GROUP DATA PER KOMODITAS
+  // 2. GROUP DATA PER KOMODITAS
   // =========================
   const grouped = {};
-
   data.forEach(row => {
     const nama = row.nama_komoditas;
 
@@ -466,23 +440,49 @@ function renderIphKumulatif(data) {
   });
 
   // =========================
-  // 4. RENDER ROW
+  // 3. BANGUN TABEL DINAMIS
   // =========================
+  let html = `
+    <div class="table-scroll-both">
+    <table class="table table-bordered table-sm table-hover">
+      <thead>
+        <tr>
+          <th class="sticky-col">No</th>
+          <th class="sticky-col-2">Komoditas</th>
+  `;
+
+  for (let m = 1; m <= maxMinggu; m++) {
+    html += `<th>M${m}</th>`;
+  }
+
+  html += `
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
   let no = 1;
   Object.keys(grouped).forEach(nama => {
-    let rowHtml = `
+    html += `
       <tr>
-        <td>${no++}</td>
-        <td>${nama}</td>
+        <td class="sticky-col">${no++}</td>
+        <td class="sticky-col-2">${nama}</td>
     `;
 
     for (let m = 1; m <= maxMinggu; m++) {
-      rowHtml += `<td>${grouped[nama][m] ?? '-'}</td>`;
+      html += `<td>${grouped[nama][m] ?? '-'}</td>`;
     }
 
-    rowHtml += '</tr>';
-    tbody.insertAdjacentHTML('beforeend', rowHtml);
+    html += `</tr>`;
   });
+
+  html += `
+      </tbody>
+    </table>
+    </div>
+  `;
+
+  container.innerHTML = html;
 }
 
 
@@ -517,6 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterPasar();
   initFilterTahun();
 });
+
 
 
 
