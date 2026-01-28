@@ -45,33 +45,31 @@
       background: #fff;
       z-index: 2;
     }
-        /* ===== TABEL HARGA HARIAN ===== */
+    /* === TABEL HARGA HARIAN === */
     .table-harga-harian {
-      table-layout: fixed;          /* 🔑 WAJIB */
-      width: max-content;
-      min-width: 100%;
+      table-layout: fixed;
+      min-width: 1200px;
       font-size: 13px;
     }
     
     .table-harga-harian th,
     .table-harga-harian td {
-      white-space: nowrap;          /* 🔑 cegah Rp turun baris */
+      white-space: nowrap;
       padding: 6px 8px;
       vertical-align: middle;
     }
-    
-    /* header tanggal */
-    .table-harga-harian thead th {
-      text-align: center;
-      font-weight: 600;
-      background: #f8f9fa;
-    }
-    
-       /* angka */
-    .table-harga-harian td.text-end {
-      font-variant-numeric: tabular-nums;
-    }
-    
+      /* Header */
+      .table-harga-harian thead th {
+        text-align: center;
+        background: #f8f9fa;
+        font-weight: 600;
+      }
+      
+      /* Kolom angka */
+      .table-harga-harian td.text-end {
+        text-align: right;
+      }
+
     /* sticky columns */
     .col-no {
       position: sticky;
@@ -222,6 +220,7 @@
 <script src="app-perkembangan.js?v=2"></script>
 </body>
 </html>
+
 
 
 
