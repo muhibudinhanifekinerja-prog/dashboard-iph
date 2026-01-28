@@ -95,13 +95,13 @@ async function loadHargaHarian() {
   const res = await fetch(url, { headers });
   const data = await res.json();
 
-  renderTabelHargaHarian(data);
+  renderHargaHarian(data);
 }
 function formatTanggal(tgl) {
   const d = new Date(tgl);
   return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short' });
 }
-function renderTabelHargaHarian(data) {
+function renderHargaHarian(data) {
   const container = document.getElementById('hargaHarian');
   container.innerHTML = '';
 
@@ -110,11 +110,9 @@ function renderTabelHargaHarian(data) {
     return;
   }
 
-  // 🔑 AMBIL & URUTKAN TANGGAL (INI KUNCI)
   const tanggalList = [...new Set(data.map(d => d.tanggal))]
     .sort((a, b) => new Date(a) - new Date(b));
 
-  // group: komoditas + pasar
   const map = {};
   data.forEach(d => {
     const key = `${d.nama_komoditas}__${d.nama_pasar}`;
@@ -133,14 +131,12 @@ function renderTabelHargaHarian(data) {
   <table class="table table-bordered table-sm table-harga-harian">
     <thead>
       <tr>
-        <th class="col-no">No</th>
-        <th class="col-komoditas">Komoditas</th>
-        <th class="col-pasar">Pasar</th>`;
+        <th>No</th>
+        <th>Komoditas</th>
+        <th>Pasar</th>`;
 
-  // 🔑 HEADER PAKAI tanggalList (SUDAH SORT)
   tanggalList.forEach(tgl => {
-    const label = tgl.slice(5); // 01-02
-    html += `<th class="text-center">${label}</th>`;
+    html += `<th>${tgl.slice(5)}</th>`;
   });
 
   html += `</tr></thead><tbody>`;
@@ -149,17 +145,13 @@ function renderTabelHargaHarian(data) {
   Object.values(map).forEach(row => {
     html += `
       <tr>
-        <td class="col-no text-center">${no++}</td>
-        <td class="col-komoditas">${row.komoditas}</td>
-        <td class="col-pasar">${row.pasar}</td>`;
+        <td>${no++}</td>
+        <td>${row.komoditas}</td>
+        <td>${row.pasar}</td>`;
 
-    // 🔑 BODY JUGA PAKAI tanggalList YANG SAMA
     tanggalList.forEach(tgl => {
       const val = row.harga[tgl];
-      html += `
-        <td class="text-end">
-          ${val ? formatRupiah(val) : '-'}
-        </td>`;
+      html += `<td class="text-end">${val ? 'Rp ' + val.toLocaleString('id-ID') : '-'}</td>`;
     });
 
     html += `</tr>`;
@@ -350,6 +342,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
