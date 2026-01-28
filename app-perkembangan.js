@@ -101,44 +101,74 @@ function formatTanggal(tgl) {
   const d = new Date(tgl);
   return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short' });
 }
-function renderHargaHarian(data) {
-  const el = document.getElementById('hargaHarian');
-  if (!data.length) {
-    el.innerHTML = '<em>Tidak ada data</em>';
+function renderTabelHargaHarian(data) {
+  const container = document.getElementById('hargaHarian');
+  container.innerHTML = '';
+
+  if (!Array.isArray(data) || data.length === 0) {
+    container.innerHTML = '<em>Tidak ada data</em>';
     return;
   }
 
- const tanggalList = [...new Set(data.map(d => d.tanggal))]
-  .sort((a, b) => new Date(a) - new Date(b));
-  const map = {};
+  // 🔑 AMBIL & URUTKAN TANGGAL (INI KUNCI)
+  const tanggalList = [...new Set(data.map(d => d.tanggal))]
+    .sort((a, b) => new Date(a) - new Date(b));
 
+  // group: komoditas + pasar
+  const map = {};
   data.forEach(d => {
-    const key = `${d.nama_komoditas}-${d.nama_pasar}`;
-    if (!map[key]) map[key] = { komoditas:d.nama_komoditas, pasar:d.nama_pasar, harga:{} };
+    const key = `${d.nama_komoditas}__${d.nama_pasar}`;
+    if (!map[key]) {
+      map[key] = {
+        komoditas: d.nama_komoditas,
+        pasar: d.nama_pasar,
+        harga: {}
+      };
+    }
     map[key].harga[d.tanggal] = d.harga;
   });
 
-  let html = `<div class="table-scroll-both"><table class="table table-bordered table-sm table-harga-harian"><thead><tr>
-    <th class="col-no">No</th>
-    <th class="col-komoditas">Komoditas</th>
-    <th class="col-pasar">Pasar</th>`;
+  let html = `
+  <div class="table-scroll-both">
+  <table class="table table-bordered table-sm table-harga-harian">
+    <thead>
+      <tr>
+        <th class="col-no">No</th>
+        <th class="col-komoditas">Komoditas</th>
+        <th class="col-pasar">Pasar</th>`;
 
-  tanggal.forEach(t => html += `<th>${t}</th>`);
-  html += '</tr></thead><tbody>';
-
-  let no = 1;
-  Object.values(map).forEach(r => {
-    html += `<tr>
-      <td class="col-no">${no++}</td>
-      <td class="col-komoditas">${r.komoditas}</td>
-      <td class="col-pasar">${r.pasar}</td>`;
-    tanggal.forEach(t => html += `<td class="text-end">${formatRupiah(r.harga[t])}</td>`);
-    html += '</tr>';
+  // 🔑 HEADER PAKAI tanggalList (SUDAH SORT)
+  tanggalList.forEach(tgl => {
+    const label = tgl.slice(5); // 01-02
+    html += `<th class="text-center">${label}</th>`;
   });
 
-  html += '</tbody></table></div>';
-  el.innerHTML = html;
+  html += `</tr></thead><tbody>`;
+
+  let no = 1;
+  Object.values(map).forEach(row => {
+    html += `
+      <tr>
+        <td class="col-no text-center">${no++}</td>
+        <td class="col-komoditas">${row.komoditas}</td>
+        <td class="col-pasar">${row.pasar}</td>`;
+
+    // 🔑 BODY JUGA PAKAI tanggalList YANG SAMA
+    tanggalList.forEach(tgl => {
+      const val = row.harga[tgl];
+      html += `
+        <td class="text-end">
+          ${val ? formatRupiah(val) : '-'}
+        </td>`;
+    });
+
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
 }
+
 
 /*************************************************
  * IPH & PERUBAHAN
@@ -320,6 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
