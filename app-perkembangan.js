@@ -233,15 +233,17 @@ function getSelectedTahun() {
 }
 function renderPerubahanMingguan(data) {
   const container = document.getElementById('perubahanPersen');
+
   if (!Array.isArray(data) || data.length === 0) {
     container.innerHTML = '<em>Tidak ada data</em>';
     return;
   }
 
-  // ambil minggu unik (1,2,3,4...)
-  const mingguList = [...new Set(data.map(d => d.minggu_ke))].sort((a,b) => a-b);
+  // ambil minggu unik
+  const mingguList = [...new Set(data.map(d => d.minggu_ke))]
+    .sort((a, b) => a - b);
 
-  // group per komoditas
+  // pivot per komoditas
   const map = {};
   data.forEach(d => {
     if (!map[d.nama_komoditas]) {
@@ -252,7 +254,7 @@ function renderPerubahanMingguan(data) {
 
   let html = `
     <div class="table-scroll-both">
-    <table class="table table-sm table-bordered align-middle">
+    <table class="table table-bordered table-sm align-middle">
       <thead>
         <tr>
           <th class="sticky-col">Komoditas</th>`;
@@ -263,12 +265,12 @@ function renderPerubahanMingguan(data) {
 
   html += `</tr></thead><tbody>`;
 
-  Object.keys(map).forEach(nama => {
+  Object.keys(map).forEach(komoditas => {
     html += `<tr>
-      <td class="sticky-col">${nama}</td>`;
+      <td class="sticky-col">${komoditas}</td>`;
 
     mingguList.forEach(m => {
-      const val = map[nama][m];
+      const val = map[komoditas][m];
       let cls = '';
 
       if (val > 0) cls = 'text-danger';
@@ -276,7 +278,7 @@ function renderPerubahanMingguan(data) {
 
       html += `
         <td class="text-end ${cls}">
-          ${val !== undefined && val !== null ? val.toFixed(2) + '%' : '-'}
+          ${val !== undefined ? val.toFixed(2) + '%' : '-'}
         </td>`;
     });
 
@@ -296,9 +298,10 @@ async function loadPerubahanMingguan() {
   );
 
   const data = await res.json();
+
+  // 🔥 INI PENTING
   renderPerubahanMingguan(data);
 }
-
 /*************************************************
  * INIT
  *************************************************/
@@ -313,5 +316,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
