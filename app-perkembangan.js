@@ -114,7 +114,7 @@ function renderHargaHarian(data) {
     map[key].harga[d.tanggal] = d.harga;
   });
 
-  let html = `<div class="table-scroll-both"><table class="table table-bordered table-sm"><thead><tr>
+  let html = `<div class="table-scroll-both"><table class="table table-bordered table-sm table-harga-harian"><thead><tr>
     <th class="sticky-col">No</th>
     <th class="sticky-col-2">Komoditas</th>
     <th>Pasar</th>`;
@@ -316,6 +316,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
