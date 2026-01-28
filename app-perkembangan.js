@@ -367,29 +367,6 @@ async function loadHargaHarian() {
 
   renderTabelHargaHarian(data);
 }
-async function loadPerubahanIPH() {
-  const bulan = document.getElementById("bulan").value;
-  const tahun = document.getElementById("tahun").value;
-  const komoditas = document.getElementById("komoditas").value;
-
-  let url = `${SUPABASE_URL}/rest/v1/v_iph_perubahan_mingguan?tahun=eq.${tahun}&bulan=eq.${bulan}`;
-
-  if (komoditas && komoditas !== "all") {
-    url += `&nama_komoditas=eq.${encodeURIComponent(komoditas)}`;
-  }
-
-  const res = await fetch(url, {
-    headers: supabaseHeaders
-  });
-
-  if (!res.ok) {
-    console.error("Gagal load perubahan IPH");
-    return;
-  }
-
-  const data = await res.json();
-  renderPerubahanIPH(data);
-}
 
 async function fetchSupabase(url, label = '') {
   if (DEBUG_SUPABASE) {
@@ -516,6 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterPasar();
   initFilterTahun();
 });
+
 
 
 
