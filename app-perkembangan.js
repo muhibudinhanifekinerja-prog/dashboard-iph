@@ -25,18 +25,28 @@ function formatIph(val) {
  * FILTER
  *************************************************/
 async function loadFilterTahun() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/v_tahun_data?select=tahun&order=tahun.desc`, { headers });
-  const data = await res.json();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/v_tahun_data?select=tahun&order=tahun.desc`,
+    { headers }
+  );
 
+  const data = await res.json();
   const select = document.getElementById('filterTahun');
-  select.innerHTML = '';
+
+  select.innerHTML = '<option value="">Pilih Tahun</option>';
 
   data.forEach(d => {
-    select.insertAdjacentHTML('beforeend',
-      `<option value="${d.tahun}">${d.tahun}</option>`);
+    select.insertAdjacentHTML(
+      'beforeend',
+      `<option value="${d.tahun}">${d.tahun}</option>`
+    );
   });
-}
 
+  // AUTO pilih tahun terbaru
+  if (data.length > 0) {
+    select.value = data[0].tahun;
+  }
+}
 async function loadFilterKomoditas() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/komoditas?select=id_komoditas,nama_komoditas&order=nama_komoditas.asc`, { headers });
   const data = await res.json();
@@ -208,6 +218,19 @@ async function loadPerubahanMingguan() {
   html += '</tbody></table>';
   el.innerHTML = html;
 }
+function getSelectedTahun() {
+  let tahun = document.getElementById('filterTahun').value;
+
+  if (!tahun) {
+    const opt = document.getElementById('filterTahun').options;
+    if (opt.length > 1) {
+      tahun = opt[1].value; // tahun pertama setelah "Pilih Tahun"
+      document.getElementById('filterTahun').value = tahun;
+    }
+  }
+
+  return tahun;
+}
 
 /*************************************************
  * INIT
@@ -223,3 +246,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
