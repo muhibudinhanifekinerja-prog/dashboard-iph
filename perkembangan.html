@@ -16,16 +16,26 @@
   }
 
   /* ===== TABEL UMUM ===== */
-  table {
-    table-layout: fixed;
-    border-collapse: collapse;
-  }
+  /* === FIX TABEL AJUR (AMAN) === */
+table {
+  table-layout: auto !important;
+}
 
-  th, td {
-    white-space: nowrap;
-    vertical-align: middle;
-  }
+th, td {
+  white-space: nowrap !important;
+  min-width: 120px;
+}
 
+td {
+  text-align: right;
+}
+
+td:first-child,
+td:nth-child(2),
+td:nth-child(3) {
+  text-align: left;
+  min-width: 160px;
+}
   /* ===== SCROLL ===== */
   .table-scroll-both {
     max-height: 420px;
