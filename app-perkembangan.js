@@ -115,9 +115,9 @@ function renderHargaHarian(data) {
   });
 
   let html = `<div class="table-scroll-both"><table class="table table-bordered table-sm table-harga-harian"><thead><tr>
-    <th class="sticky-col">No</th>
-    <th class="sticky-col-2">Komoditas</th>
-    <th>Pasar</th>`;
+    <th class="col-no">No</th>
+    <th class="col-komoditas">Komoditas</th>
+    <th class="col-pasar">Pasar</th>`;
 
   tanggal.forEach(t => html += `<th>${t}</th>`);
   html += '</tr></thead><tbody>';
@@ -125,9 +125,9 @@ function renderHargaHarian(data) {
   let no = 1;
   Object.values(map).forEach(r => {
     html += `<tr>
-      <td class="sticky-col">${no++}</td>
-      <td class="sticky-col-2">${r.komoditas}</td>
-      <td>${r.pasar}</td>`;
+      <td class="col-no">${no++}</td>
+      <td class="col-komoditas">${r.komoditas}</td>
+      <td class="col-pasar">${r.pasar}</td>`;
     tanggal.forEach(t => html += `<td class="text-end">${formatRupiah(r.harga[t])}</td>`);
     html += '</tr>';
   });
@@ -316,6 +316,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
