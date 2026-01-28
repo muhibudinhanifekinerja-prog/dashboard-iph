@@ -208,27 +208,40 @@ function setJudulPerubahan() {
 async function loadIphMingguan() {
   try {
     const bulan = document.getElementById('filterBulan').value;
-    const tahun = document.getElementById('filterTahun').value;
+    let tahun = document.getElementById('filterTahun').value;
     const komoditas = document.getElementById('filterKomoditas').value;
 
-    let url = `${SUPABASE_URL}/rest/v1/v_iph_kumulatif`
-            + `?tahun=eq.${tahun}&bulan=eq.${bulan}`;
+    // 🔑 JIKA TAHUN MASIH KOSONG, AMBIL YANG TERPILIH OTOMATIS
+    if (!tahun) {
+      const opt = document.getElementById('filterTahun').options;
+      if (opt.length > 1) {
+        tahun = opt[1].value; // tahun pertama setelah "Pilih Tahun"
+        document.getElementById('filterTahun').value = tahun;
+      }
+    }
 
-    if (komoditas && komoditas !== 'all') {
+    if (!bulan || !tahun) {
+      console.warn('Bulan atau Tahun belum siap');
+      return;
+    }
+
+    let url = `${SUPABASE_URL}/rest/v1/v_iph_kumulatif`
+      + `?tahun=eq.${tahun}&bulan=eq.${bulan}`;
+
+    if (komoditas) {
       url += `&id_komoditas=eq.${komoditas}`;
     }
 
     const res = await fetch(url, { headers: supabaseHeaders });
     const data = await res.json();
 
-    renderIphKumulatif(data); // ✅ SATU-SATUNYA RENDER
+    console.log('IPH kumulatif rows:', data.length);
+    renderIphKumulatif(data);
+
   } catch (e) {
-    console.error(e);
+    console.error('loadIphMingguan error', e);
   }
 }
-
-
-
 async function loadFilterTahun() {
   try {
     const res = await fetch(
@@ -461,7 +474,9 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterTahun();
   loadFilterKomoditas();
   loadFilterPasar();
+  initFilterTahun();
 });
+
 
 
 
