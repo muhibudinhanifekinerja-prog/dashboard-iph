@@ -92,59 +92,51 @@ async function loadHargaHarian() {
 
   renderHargaHarian(data);
 }
-function renderHargaHarian(data) {
-  const el = document.getElementById('hargaHarian');
+function renderPerubahanMingguan(data) {
+  const el = document.getElementById('perubahanPersen');
   el.innerHTML = '';
 
-  if (!data.length) {
+  if (!data || data.length === 0) {
     el.innerHTML = '<em>Tidak ada data</em>';
     return;
   }
 
-  const tanggalList = [...new Set(data.map(d => d.tanggal))]
-    .sort((a, b) => new Date(a) - new Date(b));
+  const mingguList = [...new Set(data.map(d => d.minggu_ke))].sort((a,b)=>a-b);
+  const grp = {};
 
-  const map = {};
   data.forEach(d => {
-    const key = `${d.nama_komoditas}_${d.nama_pasar}`;
-    if (!map[key]) {
-      map[key] = { komoditas: d.nama_komoditas, pasar: d.nama_pasar, harga: {} };
-    }
-    map[key].harga[d.tanggal] = d.harga;
+    if (!grp[d.nama_komoditas]) grp[d.nama_komoditas] = {};
+    grp[d.nama_komoditas][d.minggu_ke] = d.persen_perubahan;
   });
 
   let html = `
-  <div class="table-scroll">
   <table class="table table-bordered table-sm table-dashboard">
     <thead>
       <tr>
-        <th>No</th>
-        <th>Komoditas</th>
-        <th>Pasar</th>`;
+        <th>Komoditas</th>`;
 
-  tanggalList.forEach(t => html += `<th>${t.slice(5)}</th>`);
+  mingguList.forEach(m => html += `<th>M${m}</th>`);
   html += `</tr></thead><tbody>`;
 
-  let no = 1;
-  Object.values(map).forEach(r => {
-    html += `
-      <tr>
-        <td class="text-center">${no++}</td>
-        <td>${r.komoditas}</td>
-        <td>${r.pasar}</td>`;
+  Object.keys(grp).forEach(k => {
+    html += `<tr><td>${k}</td>`;
+    mingguList.forEach(m => {
+      const v = grp[k][m];
+      let cls = '';
+      if (v > 0) cls = 'perubahan-naik';
+      else if (v < 0) cls = 'perubahan-turun';
 
-    tanggalList.forEach(t => {
-      html += `<td class="text-end">${formatRupiah(r.harga[t])}</td>`;
+      html += `
+        <td class="text-end ${cls}">
+          ${v !== undefined ? Math.round(v) + '%' : '-'}
+        </td>`;
     });
-
     html += `</tr>`;
   });
 
-  html += `</tbody></table></div>`;
+  html += `</tbody></table>`;
   el.innerHTML = html;
 }
-
-
 /*************************************************
  * IPH MINGGUAN (KUMULATIF)
  *************************************************/
@@ -215,56 +207,6 @@ async function loadPerubahanMingguan() {
 
   renderPerubahanMingguan(data);
 }
-
-function renderPerubahanMingguan(data) {
-  const el = document.getElementById('perubahanPersen');
-  el.innerHTML = '';
-
-  if (!data.length) {
-    el.innerHTML = '<em>Tidak ada data</em>';
-    return;
-  }
-
-  const mingguList = [...new Set(data.map(d => d.minggu_ke))].sort((a,b)=>a-b);
-  const grp = {};
-
-  data.forEach(d => {
-    if (!grp[d.nama_komoditas]) grp[d.nama_komoditas] = {};
-    grp[d.nama_komoditas][d.minggu_ke] = d.persen_perubahan;
-  });
-
-  let html = `
-  <div class="table-scroll">
-  <table class="table table-bordered table-sm table-dashboard">
-    <thead>
-      <tr>
-        <th>Komoditas</th>`;
-
-  mingguList.forEach(m => html += `<th>M${m}</th>`);
-  html += `</tr></thead><tbody>`;
-
-  Object.keys(grp).forEach(k => {
-    html += `<tr><td>${k}</td>`;
-
-    mingguList.forEach(m => {
-      const v = grp[k][m];
-      let cls = '';
-      if (v > 0) cls = 'text-naik';
-      else if (v < 0) cls = 'text-turun';
-
-      html += `
-        <td class="text-end ${cls}">
-          ${v !== undefined ? Math.round(v) + '%' : '-'}
-        </td>`;
-    });
-
-    html += `</tr>`;
-  });
-
-  html += `</tbody></table></div>`;
-  el.innerHTML = html;
-}
-
 /*************************************************
  * INIT
  *************************************************/
@@ -280,5 +222,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
