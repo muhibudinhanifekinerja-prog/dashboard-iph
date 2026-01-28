@@ -202,7 +202,7 @@ function renderIph(data) {
   let no=1;
   Object.keys(grp).forEach(k => {
     html += `<tr><td>${no++}</td><td>${k}</td>`;
-    for (let i=1;i<=maxM;i++) html += `<td>${formatIph(grp[k][i])}</td>`;
+    for (let i=1;i<=maxM;i++) html += `<td>${formatIph(formatRupiah(grp[k][i]))}</td>`;
     html += '</tr>';
   });
 
@@ -342,6 +342,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
