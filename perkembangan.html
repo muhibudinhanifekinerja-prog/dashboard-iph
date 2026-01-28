@@ -64,6 +64,50 @@
   background: #f8f9fa;
   z-index: 3;
 }
+/* ===== TABLE IPH MINGGUAN ===== */
+.table-scroll-both {
+  overflow-x: auto;
+  position: relative;
+}
+
+.table-scroll-both table {
+  table-layout: fixed;
+  min-width: 900px;
+}
+
+/* Kolom No */
+.sticky-col {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 3;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* Kolom Komoditas */
+.sticky-col-2 {
+  position: sticky;
+  left: 50px;
+  background: #fff;
+  z-index: 3;
+  min-width: 220px;
+  white-space: nowrap;
+}
+
+/* Kolom Mingguan */
+.table-scroll-both th,
+.table-scroll-both td {
+  min-width: 100px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Header */
+.table-scroll-both thead th {
+  background: #f8f9fa;
+  z-index: 4;
+}
 
 </style>
 
@@ -232,3 +276,4 @@
 
 </body>
 </html>
+
