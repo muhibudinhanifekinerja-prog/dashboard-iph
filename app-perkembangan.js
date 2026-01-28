@@ -53,7 +53,10 @@ function getJumlahHari(bulan, tahun) {
 function formatRupiah(angka) {
   return 'Rp ' + Number(angka).toLocaleString('id-ID');
 }
-
+function formatAngka(val) {
+  if (val === null || val === undefined) return '-';
+  return Number(val).toLocaleString('id-ID');
+}
 function renderTabelHargaHarian(data) {
   const container = document.getElementById('hargaHarian');
   container.innerHTML = '';
@@ -470,7 +473,7 @@ function renderIphKumulatif(data) {
     `;
 
     for (let m = 1; m <= maxMinggu; m++) {
-      html += `<td>${grouped[nama][m] ?? '-'}</td>`;
+      html += `<td>${formatAngka(grouped[nama][m])}</td>`;
     }
 
     html += `</tr>`;
@@ -517,6 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterPasar();
   initFilterTahun();
 });
+
 
 
 
