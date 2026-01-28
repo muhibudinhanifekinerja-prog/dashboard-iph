@@ -137,6 +137,66 @@ function renderPerubahanMingguan(data) {
   html += `</tbody></table>`;
   el.innerHTML = html;
 }
+function renderHargaHarian(data) {
+  const el = document.getElementById('hargaHarian');
+  el.innerHTML = '';
+
+  if (!data || data.length === 0) {
+    el.innerHTML = '<em>Tidak ada data</em>';
+    return;
+  }
+
+  // Ambil & urutkan tanggal
+  const tanggalList = [...new Set(data.map(d => d.tanggal))]
+    .sort((a, b) => new Date(a) - new Date(b));
+
+  // Group komoditas + pasar
+  const map = {};
+  data.forEach(d => {
+    const key = d.nama_komoditas + '|' + d.nama_pasar;
+    if (!map[key]) {
+      map[key] = {
+        komoditas: d.nama_komoditas,
+        pasar: d.nama_pasar,
+        harga: {}
+      };
+    }
+    map[key].harga[d.tanggal] = d.harga;
+  });
+
+  let html = `
+  <table class="table table-bordered table-sm table-dashboard table-harian">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Komoditas</th>
+        <th>Pasar</th>`;
+
+  tanggalList.forEach(t => {
+    html += `<th>${t.slice(5)}</th>`;
+  });
+
+  html += `</tr></thead><tbody>`;
+
+  let no = 1;
+  Object.values(map).forEach(r => {
+    html += `
+      <tr>
+        <td class="text-center">${no++}</td>
+        <td>${r.komoditas}</td>
+        <td>${r.pasar}</td>`;
+
+    tanggalList.forEach(t => {
+      html += `<td class="text-end">${formatRupiah(r.harga[t])}</td>`;
+    });
+
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table>`;
+  el.innerHTML = html;
+}
+
 /*************************************************
  * IPH MINGGUAN (KUMULATIF)
  *************************************************/
@@ -222,6 +282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
