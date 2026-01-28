@@ -50,12 +50,9 @@ async function initFilterTahun() {
 function getJumlahHari(bulan, tahun) {
   return new Date(tahun, bulan, 0).getDate();
 }
-function formatRupiah(angka) {
-  return 'Rp ' + Number(angka).toLocaleString('id-ID');
-}
-function formatAngka(val) {
+function formatRupiah(val) {
   if (val === null || val === undefined) return '-';
-  return Number(val).toLocaleString('id-ID');
+  return 'Rp ' + Number(val).toLocaleString('id-ID');
 }
 function renderTabelHargaHarian(data) {
   const container = document.getElementById('hargaHarian');
@@ -415,15 +412,13 @@ function renderIphKumulatif(data) {
 
   container.innerHTML = '';
 
-  if (!data || data.length === 0) {
+  if (!Array.isArray(data) || data.length === 0) {
     container.innerHTML = '<div class="text-muted">Tidak ada data</div>';
     return;
   }
 
-  // jumlah minggu dinamis (M4 / M5)
   const maxMinggu = Math.max(...data.map(d => d.minggu_ke));
 
-  // group per komoditas
   const grouped = {};
   data.forEach(d => {
     if (!grouped[d.nama_komoditas]) grouped[d.nama_komoditas] = {};
@@ -454,7 +449,7 @@ function renderIphKumulatif(data) {
     `;
 
     for (let m = 1; m <= maxMinggu; m++) {
-      html += `<td>${formatAngka(grouped[nama][m])}</td>`;
+      html += `<td class="harga-cell">${formatRupiah(grouped[nama][m])}</td>`;
     }
 
     html += `</tr>`;
@@ -463,6 +458,7 @@ function renderIphKumulatif(data) {
   html += `</tbody></table></div>`;
   container.innerHTML = html;
 }
+
 
 function loadPerubahanMingguan() {
   const bulan = document.getElementById('filterBulan').value;
@@ -495,6 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterPasar();
   initFilterTahun();
 });
+
 
 
 
