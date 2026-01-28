@@ -220,12 +220,25 @@ function renderPerubahanMingguan(data) {
     html += `<tr><td>${k}</td>`;
     minggu.forEach(m => {
       const v = grup[k][m];
-      let cls = v > 0 ? 'perubahan-naik' : v < 0 ? 'perubahan-turun' : '';
-      html += `<td class="text-end ${cls}">${v !== undefined ? Math.round(v) + '%' : '-'}</td>`;
-    });
-    html += `</tr>`;
-  });
-
+      let cls = 'perubahan-stabil';
+      let icon = '–';
+      
+      if (v > 0) {
+        cls = 'perubahan-naik';
+        icon = '▲';
+      } else if (v < 0) {
+        cls = 'perubahan-turun';
+        icon = '▼';
+      }
+      html += `
+        <td class="text-end ${cls}">
+          <span class="perubahan-icon">${icon}</span>
+          ${v !== undefined ? Math.round(v) + '%' : '-'}
+        </td>`;
+      
+          });
+          html += `</tr>`;
+        });
   html += '</tbody></table>';
   el.innerHTML = html;
 }
@@ -244,3 +257,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
