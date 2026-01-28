@@ -95,7 +95,7 @@ async function loadHargaHarian() {
   const res = await fetch(url, { headers });
   const data = await res.json();
 
-  renderHargaHarian(data);
+  renderTabelHargaHarian(data);
 }
 function formatTanggal(tgl) {
   const d = new Date(tgl);
@@ -350,6 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
