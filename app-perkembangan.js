@@ -12,6 +12,37 @@ const supabaseHeaders = {
   Authorization: `Bearer ${SUPABASE_KEY}`,
   'Content-Type': 'application/json'
 };
+async function initFilterTahun() {
+  try {
+    const selectTahun = document.getElementById('filterTahun');
+    if (!selectTahun) return;
+
+    const url = `${SUPABASE_URL}/rest/v1/v_iph_kumulatif`
+      + `?select=tahun&order=tahun.desc`;
+
+    const res = await fetch(url, { headers: supabaseHeaders });
+    const data = await res.json();
+
+    const tahunUnik = [...new Set(data.map(d => d.tahun))];
+
+    selectTahun.innerHTML = '<option value="">Pilih Tahun</option>';
+
+    tahunUnik.forEach(tahun => {
+      selectTahun.insertAdjacentHTML(
+        'beforeend',
+        `<option value="${tahun}">${tahun}</option>`
+      );
+    });
+
+    // 🔑 AUTO PILIH TAHUN TERBARU
+    if (tahunUnik.length > 0) {
+      selectTahun.value = tahunUnik[0];
+    }
+
+  } catch (e) {
+    console.error('initFilterTahun error', e);
+  }
+}
 
 /*************************************************
  * HELPER
@@ -431,6 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
