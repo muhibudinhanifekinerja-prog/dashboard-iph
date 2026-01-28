@@ -231,6 +231,73 @@ function getSelectedTahun() {
 
   return tahun;
 }
+function renderPerubahanMingguan(data) {
+  const container = document.getElementById('perubahanPersen');
+  if (!Array.isArray(data) || data.length === 0) {
+    container.innerHTML = '<em>Tidak ada data</em>';
+    return;
+  }
+
+  // ambil minggu unik (1,2,3,4...)
+  const mingguList = [...new Set(data.map(d => d.minggu_ke))].sort((a,b) => a-b);
+
+  // group per komoditas
+  const map = {};
+  data.forEach(d => {
+    if (!map[d.nama_komoditas]) {
+      map[d.nama_komoditas] = {};
+    }
+    map[d.nama_komoditas][d.minggu_ke] = d.persen_perubahan;
+  });
+
+  let html = `
+    <div class="table-scroll-both">
+    <table class="table table-sm table-bordered align-middle">
+      <thead>
+        <tr>
+          <th class="sticky-col">Komoditas</th>`;
+
+  mingguList.forEach(m => {
+    html += `<th class="text-center">M${m}</th>`;
+  });
+
+  html += `</tr></thead><tbody>`;
+
+  Object.keys(map).forEach(nama => {
+    html += `<tr>
+      <td class="sticky-col">${nama}</td>`;
+
+    mingguList.forEach(m => {
+      const val = map[nama][m];
+      let cls = '';
+
+      if (val > 0) cls = 'text-danger';
+      if (val < 0) cls = 'text-success';
+
+      html += `
+        <td class="text-end ${cls}">
+          ${val !== undefined && val !== null ? val.toFixed(2) + '%' : '-'}
+        </td>`;
+    });
+
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
+}
+async function loadPerubahanMingguan() {
+  const bulan = filterBulan.value;
+  const tahun = getSelectedTahun();
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/v_iph_perubahan_mingguan?tahun=eq.${tahun}&bulan=eq.${bulan}`,
+    { headers }
+  );
+
+  const data = await res.json();
+  renderPerubahanMingguan(data);
+}
 
 /*************************************************
  * INIT
@@ -246,4 +313,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
