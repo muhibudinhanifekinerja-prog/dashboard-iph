@@ -11,88 +11,84 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
   <style>
-    /* ===== SCROLL CONTAINER (SEMUA TABEL) ===== */
-.table-scroll {
-  max-height: 420px;
-  overflow-y: auto;
-  overflow-x: auto;
-}
-
-/* ===== TABEL UMUM ===== */
-.table-dashboard {
-  table-layout: fixed;
-  min-width: 1200px;
-  font-size: 13px;
-  border-collapse: collapse;
-}
-
-.table-dashboard th,
-.table-dashboard td {
-  white-space: nowrap;
-  padding: 6px 8px;
-  vertical-align: middle;
-}
-
-/* Header sticky */
-.table-dashboard thead th {
-  position: sticky;
-  top: 0;
-  background: #f8f9fa;
-  z-index: 3;
-  text-align: center;
-  font-weight: 600;
-}
-
-/* Angka rata kanan */
-.table-dashboard td.text-end {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ===== STICKY KOLOM KIRI (HARGA HARIAN) ===== */
-.table-dashboard th:nth-child(1),
-.table-dashboard td:nth-child(1) {
-  position: sticky;
-  left: 0;
-  width: 45px;
-  background: #fff;
-  z-index: 4;
-}
-
-.table-dashboard th:nth-child(2),
-.table-dashboard td:nth-child(2) {
-  position: sticky;
-  left: 45px;
-  width: 180px;
-  background: #fff;
-  z-index: 3;
-}
-
-.table-dashboard th:nth-child(3),
-.table-dashboard td:nth-child(3) {
-  position: sticky;
-  left: 225px;
-  width: 140px;
-  background: #fff;
-  z-index: 3;
-}
-
-/* ===== WARNA PERUBAHAN ===== */
-.text-naik {
-  color: #dc3545; /* merah */
-  font-weight: 600;
-}
-
-.text-turun {
-  color: #198754; /* hijau */
-  font-weight: 600;
-}
-
-  </style>
-  </head>
+    /* ===== SCROLL DALAM CARD ===== */
+  .table-card-scroll {
+    max-height: 420px;
+    overflow-x: auto;
+    overflow-y: auto;
+  }
   
-  <body>
-
+  /* ===== TABEL UMUM ===== */
+  .table-dashboard {
+    table-layout: fixed;
+    min-width: 1200px;
+    font-size: 13px;
+    border-collapse: collapse;
+  }
+  
+  .table-dashboard th,
+  .table-dashboard td {
+    white-space: nowrap;
+    padding: 6px 8px;
+    vertical-align: middle;
+  }
+  
+  /* Header sticky */
+  .table-dashboard thead th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 2;
+    text-align: center;
+    font-weight: 600;
+  }
+  
+  /* Angka */
+  .table-dashboard td.text-end {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  
+  /* ===== STICKY KOLOM KHUSUS HARGA HARIAN ===== */
+  .table-harian th:nth-child(1),
+  .table-harian td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    width: 45px;
+    background: #fff;
+    z-index: 3;
+  }
+  
+  .table-harian th:nth-child(2),
+  .table-harian td:nth-child(2) {
+    position: sticky;
+    left: 45px;
+    width: 180px;
+    background: #fff;
+    z-index: 3;
+  }
+  
+  .table-harian th:nth-child(3),
+  .table-harian td:nth-child(3) {
+    position: sticky;
+    left: 225px;
+    width: 140px;
+    background: #fff;
+    z-index: 3;
+  }
+  
+  /* ===== WARNA PERUBAHAN ===== */
+  .perubahan-naik {
+    color: #dc3545;
+    font-weight: 600;
+  }
+  
+  .perubahan-turun {
+    color: #198754;
+    font-weight: 600;
+  }
+  </style>
+<body>
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
   <div class="container-fluid">
@@ -214,6 +210,7 @@
 <script src="app-perkembangan.js?v=2"></script>
 </body>
 </html>
+
 
 
 
