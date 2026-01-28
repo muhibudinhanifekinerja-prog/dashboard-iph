@@ -10,15 +10,20 @@ const headers = {
 };
 
 /*************************************************
- * HELPER FORMAT
+ * HELPER
  *************************************************/
 function formatRupiah(val) {
-  if (val === null || val === undefined) return '-';
+  if (val === null || val === undefined || isNaN(val)) return '-';
   return 'Rp\u00A0' + Math.round(val).toLocaleString('id-ID');
 }
 
+function getSelectedTahun() {
+  const el = document.getElementById('filterTahun');
+  return el.value;
+}
+
 /*************************************************
- * FILTER
+ * LOAD FILTER
  *************************************************/
 async function loadFilterTahun() {
   const res = await fetch(
@@ -26,17 +31,12 @@ async function loadFilterTahun() {
     { headers }
   );
   const data = await res.json();
-  const select = document.getElementById('filterTahun');
+  const el = document.getElementById('filterTahun');
 
-  select.innerHTML = '<option value="">Pilih Tahun</option>';
+  el.innerHTML = '';
   data.forEach(d => {
-    select.insertAdjacentHTML(
-      'beforeend',
-      `<option value="${d.tahun}">${d.tahun}</option>`
-    );
+    el.innerHTML += `<option value="${d.tahun}">${d.tahun}</option>`;
   });
-
-  if (data.length > 0) select.value = data[0].tahun;
 }
 
 async function loadFilterKomoditas() {
@@ -45,56 +45,36 @@ async function loadFilterKomoditas() {
     { headers }
   );
   const data = await res.json();
-  const select = document.getElementById('filterKomoditas');
+  const el = document.getElementById('filterKomoditas');
 
-  select.innerHTML = `<option value="">Semua Komoditas</option>`;
+  el.innerHTML = `<option value="">Semua Komoditas</option>`;
   data.forEach(d => {
-    select.insertAdjacentHTML(
-      'beforeend',
-      `<option value="${d.id_komoditas}">${d.nama_komoditas}</option>`
-    );
+    el.innerHTML += `<option value="${d.id_komoditas}">${d.nama_komoditas}</option>`;
   });
 }
 
 async function loadFilterPasar() {
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/pasar?select=id_pasar,nama_pasar,kecamatan&order=nama_pasar.asc`,
+    `${SUPABASE_URL}/rest/v1/pasar?select=id_pasar,nama_pasar&order=nama_pasar.asc`,
     { headers }
   );
   const data = await res.json();
-  const select = document.getElementById('filterPasar');
+  const el = document.getElementById('filterPasar');
 
-  select.innerHTML = `<option value="">Semua Pasar</option>`;
+  el.innerHTML = `<option value="">Semua Pasar</option>`;
   data.forEach(d => {
-    select.insertAdjacentHTML(
-      'beforeend',
-      `<option value="${d.id_pasar}">${d.nama_pasar} (${d.kecamatan})</option>`
-    );
+    el.innerHTML += `<option value="${d.id_pasar}">${d.nama_pasar}</option>`;
   });
-}
-
-function getSelectedTahun() {
-  let tahun = document.getElementById('filterTahun').value;
-  if (!tahun) {
-    const opt = document.getElementById('filterTahun').options;
-    if (opt.length > 1) {
-      tahun = opt[1].value;
-      document.getElementById('filterTahun').value = tahun;
-    }
-  }
-  return tahun;
 }
 
 /*************************************************
  * HARGA HARIAN
  *************************************************/
 async function loadHargaHarian() {
-  const komoditas = filterKomoditas.value;
-  const pasar = filterPasar.value;
   const bulan = filterBulan.value;
   const tahun = getSelectedTahun();
-
-  if (!bulan || !tahun) return;
+  const komoditas = filterKomoditas.value;
+  const pasar = filterPasar.value;
 
   const start = `${tahun}-${bulan.padStart(2, '0')}-01`;
   const end = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
@@ -114,11 +94,11 @@ async function loadHargaHarian() {
 }
 
 function renderHargaHarian(data) {
-  const container = document.getElementById('hargaHarian');
-  container.innerHTML = '';
+  const el = document.getElementById('hargaHarian');
+  el.innerHTML = '';
 
-  if (!Array.isArray(data) || data.length === 0) {
-    container.innerHTML = '<em>Tidak ada data</em>';
+  if (!data.length) {
+    el.innerHTML = '<em>Tidak ada data</em>';
     return;
   }
 
@@ -127,50 +107,30 @@ function renderHargaHarian(data) {
 
   const map = {};
   data.forEach(d => {
-    const key = `${d.nama_komoditas}__${d.nama_pasar}`;
+    const key = `${d.nama_komoditas}_${d.nama_pasar}`;
     if (!map[key]) {
-      map[key] = {
-        komoditas: d.nama_komoditas,
-        pasar: d.nama_pasar,
-        harga: {}
-      };
+      map[key] = { komoditas: d.nama_komoditas, pasar: d.nama_pasar, harga: {} };
     }
     map[key].harga[d.tanggal] = d.harga;
   });
 
-  let html = `
-  <div class="table-scroll-both">
-  <table class="table table-bordered table-sm table-harga-harian">
-    <thead>
-      <tr>
-        <th>No</th>
-        <th>Komoditas</th>
-        <th>Pasar</th>`;
+  let html = `<table class="table table-bordered table-sm"><thead><tr>
+    <th>No</th><th>Komoditas</th><th>Pasar</th>`;
 
-  tanggalList.forEach(tgl => {
-    html += `<th class="text-center">${tgl.slice(5)}</th>`;
-  });
-
+  tanggalList.forEach(t => html += `<th>${t.slice(5)}</th>`);
   html += `</tr></thead><tbody>`;
 
   let no = 1;
-  Object.values(map).forEach(row => {
-    html += `
-      <tr>
-        <td class="text-center">${no++}</td>
-        <td>${row.komoditas}</td>
-        <td>${row.pasar}</td>`;
-
-    tanggalList.forEach(tgl => {
-      const val = row.harga[tgl];
-      html += `<td class="text-end">${val ? formatRupiah(val) : '-'}</td>`;
+  Object.values(map).forEach(r => {
+    html += `<tr><td>${no++}</td><td>${r.komoditas}</td><td>${r.pasar}</td>`;
+    tanggalList.forEach(t => {
+      html += `<td class="text-end">${formatRupiah(r.harga[t])}</td>`;
     });
-
     html += `</tr>`;
   });
 
-  html += `</tbody></table></div>`;
-  container.innerHTML = html;
+  html += `</tbody></table>`;
+  el.innerHTML = html;
 }
 
 /*************************************************
@@ -179,22 +139,21 @@ function renderHargaHarian(data) {
 async function loadIphMingguan() {
   const bulan = filterBulan.value;
   const tahun = getSelectedTahun();
-  if (!bulan || !tahun) return;
 
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/v_iph_kumulatif?tahun=eq.${tahun}&bulan=eq.${bulan}`,
     { headers }
   );
-
   const data = await res.json();
-  renderIph(data);
+
+  renderIphMingguan(data);
 }
 
-function renderIph(data) {
+function renderIphMingguan(data) {
   const el = document.getElementById('iphMingguan');
   el.innerHTML = '';
 
-  if (!Array.isArray(data) || data.length === 0) {
+  if (!data.length) {
     el.innerHTML = '<em>Tidak ada data</em>';
     return;
   }
@@ -207,81 +166,74 @@ function renderIph(data) {
     grp[d.nama_komoditas][d.minggu_ke] = d.iph_mingguan;
   });
 
-  let html = `
-  <div class="table-scroll-both">
-  <table class="table table-bordered table-sm align-middle">
-    <thead>
-      <tr>
-        <th>No</th>
-        <th>Komoditas</th>`;
+  let html = `<table class="table table-bordered table-sm"><thead><tr>
+    <th>No</th><th>Komoditas</th>`;
 
-  for (let i = 1; i <= maxM; i++) {
-    html += `<th class="text-center">M${i}</th>`;
-  }
-
+  for (let i = 1; i <= maxM; i++) html += `<th>M${i}</th>`;
   html += `</tr></thead><tbody>`;
 
   let no = 1;
   Object.keys(grp).forEach(k => {
-    html += `
-      <tr>
-        <td class="text-center">${no++}</td>
-        <td>${k}</td>`;
-
+    html += `<tr><td>${no++}</td><td>${k}</td>`;
     for (let i = 1; i <= maxM; i++) {
-      const val = grp[k][i];
-      html += `
-        <td class="text-end">
-          ${val !== undefined && val !== null
-            ? formatRupiah(val)
-            : '-'}
-        </td>`;
+      html += `<td class="text-end">${formatRupiah(grp[k][i])}</td>`;
     }
-
     html += `</tr>`;
   });
 
-  html += `</tbody></table></div>`;
+  html += `</tbody></table>`;
   el.innerHTML = html;
 }
+
+/*************************************************
+ * % PERUBAHAN MINGGUAN
+ *************************************************/
+async function loadPerubahanMingguan() {
+  const bulan = filterBulan.value;
+  const tahun = getSelectedTahun();
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/v_iph_perubahan_mingguan?tahun=eq.${tahun}&bulan=eq.${bulan}`,
+    { headers }
+  );
+  const data = await res.json();
+
+  renderPerubahanMingguan(data);
+}
+
 function renderPerubahanMingguan(data) {
   const el = document.getElementById('perubahanPersen');
   el.innerHTML = '';
 
-  if (!Array.isArray(data) || data.length === 0) {
+  if (!data.length) {
     el.innerHTML = '<em>Tidak ada data</em>';
     return;
   }
 
   const mingguList = [...new Set(data.map(d => d.minggu_ke))].sort((a,b)=>a-b);
-  const map = {};
+  const grp = {};
 
   data.forEach(d => {
-    if (!map[d.nama_komoditas]) map[d.nama_komoditas] = {};
-    map[d.nama_komoditas][d.minggu_ke] = d.persen_perubahan;
+    if (!grp[d.nama_komoditas]) grp[d.nama_komoditas] = {};
+    grp[d.nama_komoditas][d.minggu_ke] = d.persen_perubahan;
   });
 
-  let html = `
-  <div class="table-scroll-both">
-  <table class="table table-bordered table-sm">
-    <thead>
-      <tr>
-        <th>Komoditas</th>`;
+  let html = `<table class="table table-bordered table-sm"><thead><tr>
+    <th>Komoditas</th>`;
 
-  mingguList.forEach(m => html += `<th class="text-center">M${m}</th>`);
+  mingguList.forEach(m => html += `<th>M${m}</th>`);
   html += `</tr></thead><tbody>`;
 
-  Object.keys(map).forEach(k => {
+  Object.keys(grp).forEach(k => {
     html += `<tr><td>${k}</td>`;
     mingguList.forEach(m => {
-      const v = map[k][m];
-      const cls = v > 0 ? 'text-danger' : v < 0 ? 'text-success' : '';
-      html += `<td class="text-end ${cls}">${v !== undefined ? Math.round(v) + '%' : '-'}</td>`;
+      const v = grp[k][m];
+      html += `<td class="text-end">${v !== undefined ? Math.round(v) + '%' : '-'}</td>`;
     });
     html += `</tr>`;
   });
 
-  html += `</tbody></table></div>`;
+  html += `</tbody></table>`;
   el.innerHTML = html;
 }
 
@@ -299,4 +251,3 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
-
