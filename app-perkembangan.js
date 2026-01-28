@@ -97,7 +97,10 @@ async function loadHargaHarian() {
 
   renderHargaHarian(data);
 }
-
+function formatTanggal(tgl) {
+  const d = new Date(tgl);
+  return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short' });
+}
 function renderHargaHarian(data) {
   const el = document.getElementById('hargaHarian');
   if (!data.length) {
@@ -105,7 +108,8 @@ function renderHargaHarian(data) {
     return;
   }
 
-  const tanggal = [...new Set(data.map(d => d.tanggal))];
+ const tanggalList = [...new Set(data.map(d => d.tanggal))]
+  .sort((a, b) => new Date(a) - new Date(b));
   const map = {};
 
   data.forEach(d => {
@@ -316,6 +320,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
