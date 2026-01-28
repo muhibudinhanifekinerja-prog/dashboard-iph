@@ -87,91 +87,71 @@ async function loadHargaHarian() {
 function renderHargaHarian(data) {
   const el = document.getElementById('hargaHarian');
 
-  if (!data.length) {
+  if (!data || !data.length) {
     el.innerHTML = '<em>Tidak ada data</em>';
     return;
   }
 
+  // ===============================
+  // Ambil daftar tanggal unik
+  // ===============================
+  const tanggalList = [...new Set(data.map(d => d.tanggal))]
+    .sort((a, b) => a.localeCompare(b));
+
+  // ===============================
+  // Group: Komoditas + Pasar
+  // ===============================
+  const grup = {};
+
+  data.forEach(d => {
+    const key = `${d.nama_komoditas}||${d.nama_pasar}`;
+    if (!grup[key]) {
+      grup[key] = {
+        komoditas: d.nama_komoditas,
+        pasar: d.nama_pasar,
+        harga: {}
+      };
+    }
+    grup[key].harga[d.tanggal] = d.harga;
+  });
+
+  // ===============================
+  // Build tabel
+  // ===============================
   let html = `
     <table class="table table-bordered table-sm table-dashboard">
       <thead>
         <tr>
           <th>No</th>
           <th>Komoditas</th>
-          <th>Pasar</th>
-          <th>Tanggal</th>
-          <th>Harga</th>
-        </tr>
-      </thead>
-      <tbody>`;
+          <th>Pasar</th>`;
 
-  data.forEach((d, i) => {
-    html += `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${d.nama_komoditas}</td>
-        <td>${d.nama_pasar}</td>
-        <td>${d.tanggal}</td>
-        <td class="text-end">${formatRupiah(d.harga)}</td>
-      </tr>`;
+  tanggalList.forEach(tgl => {
+    html += `<th>${tgl}</th>`;
   });
 
-  html += '</tbody></table>';
-  el.innerHTML = html;
-}
-
-/*************************************************
- * IPH MINGGUAN
- *************************************************/
-async function loadIphMingguan() {
-  const bulan = filterBulan.value;
-  const tahun = getSelectedTahun();
-
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/v_iph_kumulatif?tahun=eq.${tahun}&bulan=eq.${bulan}`,
-    { headers }
-  );
-  const data = await res.json();
-
-  renderIphMingguan(data);
-}
-
-function renderIphMingguan(data) {
-  const el = document.getElementById('iphMingguan');
-
-  if (!data.length) {
-    el.innerHTML = '<em>Tidak ada data</em>';
-    return;
-  }
-
-  const maxM = Math.max(...data.map(d => d.minggu_ke));
-  const grup = {};
-
-  data.forEach(d => {
-    if (!grup[d.nama_komoditas]) grup[d.nama_komoditas] = {};
-    grup[d.nama_komoditas][d.minggu_ke] = d.iph_mingguan;
-  });
-
-  let html = `
-    <table class="table table-bordered table-sm table-dashboard">
-      <thead>
-        <tr>
-          <th>No</th>
-          <th>Komoditas</th>`;
-
-  for (let i = 1; i <= maxM; i++) html += `<th>M${i}</th>`;
   html += `</tr></thead><tbody>`;
 
   let no = 1;
-  Object.keys(grup).forEach(k => {
-    html += `<tr><td>${no++}</td><td>${k}</td>`;
-    for (let i = 1; i <= maxM; i++) {
-      html += `<td class="text-end">${formatRupiah(grup[k][i])}</td>`;
-    }
+  Object.values(grup).forEach(row => {
+    html += `
+      <tr>
+        <td>${no++}</td>
+        <td>${row.komoditas}</td>
+        <td>${row.pasar}</td>`;
+
+    tanggalList.forEach(tgl => {
+      const harga = row.harga[tgl];
+      html += `
+        <td class="text-end">
+          ${harga !== undefined ? formatRupiah(harga) : '-'}
+        </td>`;
+    });
+
     html += `</tr>`;
   });
 
-  html += '</tbody></table>';
+  html += `</tbody></table>`;
   el.innerHTML = html;
 }
 
