@@ -407,40 +407,81 @@ async function fetchSupabase(url, label = '') {
   }
 }
 function renderIphKumulatif(data) {
-  const tbody = document.querySelector('#tabelIphMingguan tbody');
-  if (!tbody) return;
-
-  tbody.innerHTML = '';
-
-  if (!data || data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6">Tidak ada data</td></tr>';
+  const table = document.getElementById('tabelIphMingguan');
+  if (!table) {
+    console.error('Tabel IPH Mingguan tidak ditemukan');
     return;
   }
 
-  const map = {};
+  const thead = table.querySelector('thead');
+  const tbody = table.querySelector('tbody');
+
+  if (!thead || !tbody) {
+    console.error('thead / tbody tidak ditemukan');
+    return;
+  }
+
+  tbody.innerHTML = '';
+  thead.innerHTML = '';
+
+  if (!Array.isArray(data) || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="2">Tidak ada data</td></tr>';
+    return;
+  }
+
+  // =========================
+  // 1. CARI JUMLAH MINGGU (M4 / M5)
+  // =========================
+  const maxMinggu = Math.max(...data.map(d => d.minggu_ke));
+
+  // =========================
+  // 2. BANGUN HEADER DINAMIS
+  // =========================
+  let headerHtml = `
+    <tr>
+      <th>No</th>
+      <th>Komoditas</th>
+  `;
+
+  for (let m = 1; m <= maxMinggu; m++) {
+    headerHtml += `<th>M${m}</th>`;
+  }
+
+  headerHtml += '</tr>';
+  thead.innerHTML = headerHtml;
+
+  // =========================
+  // 3. GROUP DATA PER KOMODITAS
+  // =========================
+  const grouped = {};
 
   data.forEach(row => {
-    if (!map[row.id_komoditas]) {
-      map[row.id_komoditas] = {
-        nama: row.nama_komoditas,
-        minggu: {}
-      };
+    const nama = row.nama_komoditas;
+
+    if (!grouped[nama]) {
+      grouped[nama] = {};
     }
-    map[row.id_komoditas].minggu[row.minggu_ke] = row.iph_mingguan;
+
+    grouped[nama][row.minggu_ke] = row.iph_mingguan;
   });
 
+  // =========================
+  // 4. RENDER ROW
+  // =========================
   let no = 1;
-  Object.values(map).forEach(item => {
-    let tr = `<tr>
-      <td>${no++}</td>
-      <td>${item.nama}</td>`;
+  Object.keys(grouped).forEach(nama => {
+    let rowHtml = `
+      <tr>
+        <td>${no++}</td>
+        <td>${nama}</td>
+    `;
 
-    for (let m = 1; m <= 4; m++) {
-      tr += `<td>${item.minggu[m] ?? '-'}</td>`;
+    for (let m = 1; m <= maxMinggu; m++) {
+      rowHtml += `<td>${grouped[nama][m] ?? '-'}</td>`;
     }
 
-    tr += '</tr>';
-    tbody.insertAdjacentHTML('beforeend', tr);
+    rowHtml += '</tr>';
+    tbody.insertAdjacentHTML('beforeend', rowHtml);
   });
 }
 
@@ -476,6 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterPasar();
   initFilterTahun();
 });
+
 
 
 
