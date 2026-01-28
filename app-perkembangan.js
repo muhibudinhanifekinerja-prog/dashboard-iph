@@ -14,12 +14,11 @@ const headers = {
  *************************************************/
 function formatRupiah(val) {
   if (val === null || val === undefined || isNaN(val)) return '-';
-  return 'Rp\u00A0' + Math.round(val).toLocaleString('id-ID');
+  return 'Rp ' + Math.round(val).toLocaleString('id-ID');
 }
 
 function getSelectedTahun() {
-  const el = document.getElementById('filterTahun');
-  return el.value;
+  return document.getElementById('filterTahun').value;
 }
 
 /*************************************************
@@ -32,7 +31,6 @@ async function loadFilterTahun() {
   );
   const data = await res.json();
   const el = document.getElementById('filterTahun');
-
   el.innerHTML = '';
   data.forEach(d => {
     el.innerHTML += `<option value="${d.tahun}">${d.tahun}</option>`;
@@ -46,7 +44,6 @@ async function loadFilterKomoditas() {
   );
   const data = await res.json();
   const el = document.getElementById('filterKomoditas');
-
   el.innerHTML = `<option value="">Semua Komoditas</option>`;
   data.forEach(d => {
     el.innerHTML += `<option value="${d.id_komoditas}">${d.nama_komoditas}</option>`;
@@ -60,7 +57,6 @@ async function loadFilterPasar() {
   );
   const data = await res.json();
   const el = document.getElementById('filterPasar');
-
   el.innerHTML = `<option value="">Semua Pasar</option>`;
   data.forEach(d => {
     el.innerHTML += `<option value="${d.id_pasar}">${d.nama_pasar}</option>`;
@@ -73,132 +69,59 @@ async function loadFilterPasar() {
 async function loadHargaHarian() {
   const bulan = filterBulan.value;
   const tahun = getSelectedTahun();
-  const komoditas = filterKomoditas.value;
-  const pasar = filterPasar.value;
 
   const start = `${tahun}-${bulan.padStart(2, '0')}-01`;
   const end = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
 
-  let url =
+  const url =
     `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap`
     + `?tanggal=gte.${start}&tanggal=lte.${end}`
     + `&order=nama_komoditas.asc&order=nama_pasar.asc&order=tanggal.asc`;
-
-  if (komoditas) url += `&id_komoditas=eq.${komoditas}`;
-  if (pasar) url += `&id_pasar=eq.${pasar}`;
 
   const res = await fetch(url, { headers });
   const data = await res.json();
 
   renderHargaHarian(data);
 }
-function renderPerubahanMingguan(data) {
-  const el = document.getElementById('perubahanPersen');
-  el.innerHTML = '';
 
-  if (!data || data.length === 0) {
-    el.innerHTML = '<em>Tidak ada data</em>';
-    return;
-  }
-
-  const mingguList = [...new Set(data.map(d => d.minggu_ke))].sort((a,b)=>a-b);
-  const grp = {};
-
-  data.forEach(d => {
-    if (!grp[d.nama_komoditas]) grp[d.nama_komoditas] = {};
-    grp[d.nama_komoditas][d.minggu_ke] = d.persen_perubahan;
-  });
-
-  let html = `
-  <table class="table table-bordered table-sm table-dashboard">
-    <thead>
-      <tr>
-        <th>Komoditas</th>`;
-
-  mingguList.forEach(m => html += `<th>M${m}</th>`);
-  html += `</tr></thead><tbody>`;
-
-  Object.keys(grp).forEach(k => {
-    html += `<tr><td>${k}</td>`;
-    mingguList.forEach(m => {
-      const v = grp[k][m];
-      let cls = '';
-      if (v > 0) cls = 'perubahan-naik';
-      else if (v < 0) cls = 'perubahan-turun';
-
-      html += `
-        <td class="text-end ${cls}">
-          ${v !== undefined ? Math.round(v) + '%' : '-'}
-        </td>`;
-    });
-    html += `</tr>`;
-  });
-
-  html += `</tbody></table>`;
-  el.innerHTML = html;
-}
 function renderHargaHarian(data) {
   const el = document.getElementById('hargaHarian');
-  el.innerHTML = '';
 
-  if (!data || data.length === 0) {
+  if (!data.length) {
     el.innerHTML = '<em>Tidak ada data</em>';
     return;
   }
 
-  // Ambil & urutkan tanggal
-  const tanggalList = [...new Set(data.map(d => d.tanggal))]
-    .sort((a, b) => new Date(a) - new Date(b));
-
-  // Group komoditas + pasar
-  const map = {};
-  data.forEach(d => {
-    const key = d.nama_komoditas + '|' + d.nama_pasar;
-    if (!map[key]) {
-      map[key] = {
-        komoditas: d.nama_komoditas,
-        pasar: d.nama_pasar,
-        harga: {}
-      };
-    }
-    map[key].harga[d.tanggal] = d.harga;
-  });
-
   let html = `
-  <table class="table table-bordered table-sm table-dashboard table-harian">
-    <thead>
-      <tr>
-        <th>No</th>
-        <th>Komoditas</th>
-        <th>Pasar</th>`;
+    <table class="table table-bordered table-sm table-dashboard">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Komoditas</th>
+          <th>Pasar</th>
+          <th>Tanggal</th>
+          <th>Harga</th>
+        </tr>
+      </thead>
+      <tbody>`;
 
-  tanggalList.forEach(t => {
-    html += `<th>${t.slice(5)}</th>`;
-  });
-
-  html += `</tr></thead><tbody>`;
-
-  let no = 1;
-  Object.values(map).forEach(r => {
+  data.forEach((d, i) => {
     html += `
       <tr>
-        <td class="text-center">${no++}</td>
-        <td>${r.komoditas}</td>
-        <td>${r.pasar}</td>`;
-
-    tanggalList.forEach(t => {
-      html += `<td class="text-end">${formatRupiah(r.harga[t])}</td>`;
-    });
-
-    html += `</tr>`;
+        <td>${i + 1}</td>
+        <td>${d.nama_komoditas}</td>
+        <td>${d.nama_pasar}</td>
+        <td>${d.tanggal}</td>
+        <td class="text-end">${formatRupiah(d.harga)}</td>
+      </tr>`;
   });
 
-  html += `</tbody></table>`;
+  html += '</tbody></table>';
   el.innerHTML = html;
 }
 
 /*************************************************
- * IPH MINGGUAN (KUMULATIF)
+ * IPH MINGGUAN
  *************************************************/
 async function loadIphMingguan() {
   const bulan = filterBulan.value;
@@ -215,7 +138,6 @@ async function loadIphMingguan() {
 
 function renderIphMingguan(data) {
   const el = document.getElementById('iphMingguan');
-  el.innerHTML = '';
 
   if (!data.length) {
     el.innerHTML = '<em>Tidak ada data</em>';
@@ -223,37 +145,38 @@ function renderIphMingguan(data) {
   }
 
   const maxM = Math.max(...data.map(d => d.minggu_ke));
-  const grp = {};
+  const grup = {};
 
   data.forEach(d => {
-    if (!grp[d.nama_komoditas]) grp[d.nama_komoditas] = {};
-    grp[d.nama_komoditas][d.minggu_ke] = d.iph_mingguan;
+    if (!grup[d.nama_komoditas]) grup[d.nama_komoditas] = {};
+    grup[d.nama_komoditas][d.minggu_ke] = d.iph_mingguan;
   });
 
   let html = `
-            <div class="table-scroll">
-            <table class="table table-bordered table-sm table-dashboard">
-            <thead><tr>
-              <th>No</th>
-              <th>Komoditas</th>`;
+    <table class="table table-bordered table-sm table-dashboard">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Komoditas</th>`;
+
   for (let i = 1; i <= maxM; i++) html += `<th>M${i}</th>`;
   html += `</tr></thead><tbody>`;
 
   let no = 1;
-  Object.keys(grp).forEach(k => {
+  Object.keys(grup).forEach(k => {
     html += `<tr><td>${no++}</td><td>${k}</td>`;
     for (let i = 1; i <= maxM; i++) {
-      html += `<td class="text-end">${formatRupiah(grp[k][i])}</td>`;
+      html += `<td class="text-end">${formatRupiah(grup[k][i])}</td>`;
     }
     html += `</tr>`;
   });
 
-  html += `</tbody></table></div>`;
+  html += '</tbody></table>';
   el.innerHTML = html;
 }
 
 /*************************************************
- * % PERUBAHAN MINGGUAN
+ * PERUBAHAN MINGGUAN
  *************************************************/
 async function loadPerubahanMingguan() {
   const bulan = filterBulan.value;
@@ -267,6 +190,46 @@ async function loadPerubahanMingguan() {
 
   renderPerubahanMingguan(data);
 }
+
+function renderPerubahanMingguan(data) {
+  const el = document.getElementById('perubahanPersen');
+
+  if (!data.length) {
+    el.innerHTML = '<em>Tidak ada data</em>';
+    return;
+  }
+
+  const minggu = [...new Set(data.map(d => d.minggu_ke))].sort((a, b) => a - b);
+  const grup = {};
+
+  data.forEach(d => {
+    if (!grup[d.nama_komoditas]) grup[d.nama_komoditas] = {};
+    grup[d.nama_komoditas][d.minggu_ke] = d.persen_perubahan;
+  });
+
+  let html = `
+    <table class="table table-bordered table-sm table-dashboard">
+      <thead>
+        <tr>
+          <th>Komoditas</th>`;
+
+  minggu.forEach(m => html += `<th>M${m}</th>`);
+  html += `</tr></thead><tbody>`;
+
+  Object.keys(grup).forEach(k => {
+    html += `<tr><td>${k}</td>`;
+    minggu.forEach(m => {
+      const v = grup[k][m];
+      let cls = v > 0 ? 'perubahan-naik' : v < 0 ? 'perubahan-turun' : '';
+      html += `<td class="text-end ${cls}">${v !== undefined ? Math.round(v) + '%' : '-'}</td>`;
+    });
+    html += `</tr>`;
+  });
+
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
 /*************************************************
  * INIT
  *************************************************/
@@ -274,7 +237,6 @@ document.getElementById('btnTampil').onclick = () => {
   loadHargaHarian();
   loadIphMingguan();
   loadPerubahanMingguan();
-  console.log('loadPerubahanMingguan EXIST:', typeof loadPerubahanMingguan);
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -282,7 +244,3 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
-
-
-
-
