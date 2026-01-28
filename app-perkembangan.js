@@ -92,7 +92,6 @@ async function loadHargaHarian() {
 
   renderHargaHarian(data);
 }
-
 function renderHargaHarian(data) {
   const el = document.getElementById('hargaHarian');
   el.innerHTML = '';
@@ -114,24 +113,37 @@ function renderHargaHarian(data) {
     map[key].harga[d.tanggal] = d.harga;
   });
 
-  let html = `<table class="table table-bordered table-sm"><thead><tr>
-    <th>No</th><th>Komoditas</th><th>Pasar</th>`;
+  let html = `
+  <div class="table-scroll">
+  <table class="table table-bordered table-sm table-dashboard">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Komoditas</th>
+        <th>Pasar</th>`;
 
   tanggalList.forEach(t => html += `<th>${t.slice(5)}</th>`);
   html += `</tr></thead><tbody>`;
 
   let no = 1;
   Object.values(map).forEach(r => {
-    html += `<tr><td>${no++}</td><td>${r.komoditas}</td><td>${r.pasar}</td>`;
+    html += `
+      <tr>
+        <td class="text-center">${no++}</td>
+        <td>${r.komoditas}</td>
+        <td>${r.pasar}</td>`;
+
     tanggalList.forEach(t => {
       html += `<td class="text-end">${formatRupiah(r.harga[t])}</td>`;
     });
+
     html += `</tr>`;
   });
 
-  html += `</tbody></table>`;
+  html += `</tbody></table></div>`;
   el.innerHTML = html;
 }
+
 
 /*************************************************
  * IPH MINGGUAN (KUMULATIF)
@@ -166,9 +178,12 @@ function renderIphMingguan(data) {
     grp[d.nama_komoditas][d.minggu_ke] = d.iph_mingguan;
   });
 
-  let html = `<table class="table table-bordered table-sm"><thead><tr>
-    <th>No</th><th>Komoditas</th>`;
-
+  let html = `
+            <div class="table-scroll">
+            <table class="table table-bordered table-sm table-dashboard">
+            <thead><tr>
+              <th>No</th>
+              <th>Komoditas</th>`;
   for (let i = 1; i <= maxM; i++) html += `<th>M${i}</th>`;
   html += `</tr></thead><tbody>`;
 
@@ -181,7 +196,7 @@ function renderIphMingguan(data) {
     html += `</tr>`;
   });
 
-  html += `</tbody></table>`;
+  html += `</tbody></table></div>`;
   el.innerHTML = html;
 }
 
@@ -218,22 +233,35 @@ function renderPerubahanMingguan(data) {
     grp[d.nama_komoditas][d.minggu_ke] = d.persen_perubahan;
   });
 
-  let html = `<table class="table table-bordered table-sm"><thead><tr>
-    <th>Komoditas</th>`;
+  let html = `
+  <div class="table-scroll">
+  <table class="table table-bordered table-sm table-dashboard">
+    <thead>
+      <tr>
+        <th>Komoditas</th>`;
 
   mingguList.forEach(m => html += `<th>M${m}</th>`);
   html += `</tr></thead><tbody>`;
 
   Object.keys(grp).forEach(k => {
     html += `<tr><td>${k}</td>`;
+
     mingguList.forEach(m => {
       const v = grp[k][m];
-      html += `<td class="text-end">${v !== undefined ? Math.round(v) + '%' : '-'}</td>`;
+      let cls = '';
+      if (v > 0) cls = 'text-naik';
+      else if (v < 0) cls = 'text-turun';
+
+      html += `
+        <td class="text-end ${cls}">
+          ${v !== undefined ? Math.round(v) + '%' : '-'}
+        </td>`;
     });
+
     html += `</tr>`;
   });
 
-  html += `</tbody></table>`;
+  html += `</tbody></table></div>`;
   el.innerHTML = html;
 }
 
@@ -252,4 +280,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
