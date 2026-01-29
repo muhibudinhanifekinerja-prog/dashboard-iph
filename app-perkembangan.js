@@ -297,6 +297,66 @@ async function loadIphMingguan() {
   renderIphMingguan(data);
 }
 /*************************************************
+ * RENDER IPH MINGGUAN (KUMULATIF)
+ *************************************************/
+function renderIphMingguan(data) {
+  const el = document.getElementById('iphMingguan');
+
+  if (!data || data.length === 0) {
+    el.innerHTML = '<em>Tidak ada data</em>';
+    return;
+  }
+
+  // cari minggu maksimal
+  const maxMinggu = Math.max(...data.map(d => d.minggu_ke));
+
+  // grouping per komoditas
+  const grup = {};
+  data.forEach(d => {
+    if (!grup[d.nama_komoditas]) {
+      grup[d.nama_komoditas] = {};
+    }
+    grup[d.nama_komoditas][d.minggu_ke] = d.iph_mingguan;
+  });
+
+  // build tabel
+  let html = `
+    <table class="table table-bordered table-sm table-dashboard">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Komoditas</th>`;
+
+  for (let i = 1; i <= maxMinggu; i++) {
+    html += `<th>M${i}</th>`;
+  }
+
+  html += `</tr></thead><tbody>`;
+
+  let no = 1;
+  Object.keys(grup).forEach(komoditas => {
+    html += `
+      <tr>
+        <td>${no++}</td>
+        <td>${komoditas}</td>`;
+
+    for (let i = 1; i <= maxMinggu; i++) {
+      html += `
+        <td class="text-end">
+          ${grup[komoditas][i] !== undefined
+            ? formatRupiah(grup[komoditas][i])
+            : '-'}
+        </td>`;
+    }
+
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table>`;
+  el.innerHTML = html;
+}
+
+/*************************************************
  * INIT
  *************************************************/
 document.getElementById('btnTampil').onclick = () => {
@@ -315,6 +375,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
