@@ -84,33 +84,41 @@ async function loadFilterPasar() {
  * HARGA HARIAN
  *************************************************/
 async function loadHargaHarian() {
-  const bulan = filterBulan.value;
+  const bulan = document.getElementById('filterBulan').value;
   const tahun = getSelectedTahun();
+
   const komoditasArr = getCheckedValues('filterKomoditasList');
   const pasarArr = getCheckedValues('filterPasarList');
+
   const start = `${tahun}-${bulan.padStart(2, '0')}-01`;
   const end = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
 
-  const url =
+  // ⚠️ HARUS let
+  let url =
     `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap`
-    + `?tanggal=gte.${start}&tanggal=lte.${end}`
-    + `&order=nama_komoditas.asc&order=nama_pasar.asc&order=tanggal.asc`;
+    + `?tanggal=gte.${start}`
+    + `&tanggal=lte.${end}`
+    + `&order=nama_komoditas.asc`
+    + `&order=nama_pasar.asc`
+    + `&order=tanggal.asc`;
+
   // filter komoditas multiple
-    if (komoditasArr.length > 0) {
-      url += `&id_komoditas=in.(${komoditasArr.join(',')})`;
-    }
-    
-    // filter pasar multiple
-    if (pasarArr.length > 0) {
-      url += `&id_pasar=in.(${pasarArr.join(',')})`;
-    }
+  if (komoditasArr.length > 0) {
+    url += `&id_komoditas=in.(${komoditasArr.join(',')})`;
+  }
+
+  // filter pasar multiple
+  if (pasarArr.length > 0) {
+    url += `&id_pasar=in.(${pasarArr.join(',')})`;
+  }
+
+  console.log('QUERY SUPABASE:', url);
 
   const res = await fetch(url, { headers });
   const data = await res.json();
 
   renderHargaHarian(data);
 }
-
 function renderHargaHarian(data) {
   const el = document.getElementById('hargaHarian');
 
@@ -251,4 +259,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
