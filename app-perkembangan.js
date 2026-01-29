@@ -20,6 +20,11 @@ function formatRupiah(val) {
 function getSelectedTahun() {
   return document.getElementById('filterTahun').value;
 }
+function getCheckedValues(containerId) {
+  return Array.from(
+    document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`)
+  ).map(cb => cb.value);
+}
 
 /*************************************************
  * LOAD FILTER
@@ -43,33 +48,46 @@ async function loadFilterKomoditas() {
     { headers }
   );
   const data = await res.json();
-  const el = document.getElementById('filterKomoditas');
-  el.innerHTML = `<option value="">Semua Komoditas</option>`;
+  const el = document.getElementById('filterKomoditasList');
+
+  el.innerHTML = '';
   data.forEach(d => {
-    el.innerHTML += `<option value="${d.id_komoditas}">${d.nama_komoditas}</option>`;
+    el.innerHTML += `
+      <li>
+        <label>
+          <input type="checkbox" value="${d.id_komoditas}">
+          ${d.nama_komoditas}
+        </label>
+      </li>`;
   });
 }
-
 async function loadFilterPasar() {
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/pasar?select=id_pasar,nama_pasar&order=nama_pasar.asc`,
     { headers }
   );
   const data = await res.json();
-  const el = document.getElementById('filterPasar');
-  el.innerHTML = `<option value="">Semua Pasar</option>`;
+  const el = document.getElementById('filterPasarList');
+
+  el.innerHTML = '';
   data.forEach(d => {
-    el.innerHTML += `<option value="${d.id_pasar}">${d.nama_pasar}</option>`;
+    el.innerHTML += `
+      <li>
+        <label>
+          <input type="checkbox" value="${d.id_pasar}">
+          ${d.nama_pasar}
+        </label>
+      </li>`;
   });
 }
-
 /*************************************************
  * HARGA HARIAN
  *************************************************/
 async function loadHargaHarian() {
   const bulan = filterBulan.value;
   const tahun = getSelectedTahun();
-
+  const komoditasArr = getCheckedValues('filterKomoditasList');
+  const pasarArr = getCheckedValues('filterPasarList');
   const start = `${tahun}-${bulan.padStart(2, '0')}-01`;
   const end = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
 
@@ -77,6 +95,15 @@ async function loadHargaHarian() {
     `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap`
     + `?tanggal=gte.${start}&tanggal=lte.${end}`
     + `&order=nama_komoditas.asc&order=nama_pasar.asc&order=tanggal.asc`;
+  // filter komoditas multiple
+    if (komoditasArr.length > 0) {
+      url += `&id_komoditas=in.(${komoditasArr.join(',')})`;
+    }
+    
+    // filter pasar multiple
+    if (pasarArr.length > 0) {
+      url += `&id_pasar=in.(${pasarArr.join(',')})`;
+    }
 
   const res = await fetch(url, { headers });
   const data = await res.json();
@@ -224,3 +251,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
