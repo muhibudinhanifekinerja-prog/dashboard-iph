@@ -279,12 +279,12 @@ async function loadIphMingguan() {
     + `&order=nama_komoditas.asc`
     + `&order=minggu_ke.asc`;
 
-  // 🔹 FILTER KOMODITAS (OPSIONAL)
+  // 🔹 filter komoditas
   if (komoditasArr.length > 0) {
     url += `&id_komoditas=in.(${komoditasArr.join(',')})`;
   }
 
-  // 🔹 FILTER PASAR (OPSIONAL, JIKA VIEW PUNYA)
+  // 🔹 filter pasar → AGREGAT TERPILIH
   if (pasarArr.length > 0) {
     url += `&id_pasar=in.(${pasarArr.join(',')})`;
   }
@@ -296,9 +296,6 @@ async function loadIphMingguan() {
 
   renderIphMingguan(data);
 }
-/*************************************************
- * RENDER IPH MINGGUAN (KUMULATIF)
- *************************************************/
 function renderIphMingguan(data) {
   const el = document.getElementById('iphMingguan');
 
@@ -307,19 +304,15 @@ function renderIphMingguan(data) {
     return;
   }
 
-  // cari minggu maksimal
-  const maxMinggu = Math.max(...data.map(d => d.minggu_ke));
-
-  // grouping per komoditas
+  const maxM = Math.max(...data.map(d => d.minggu_ke));
   const grup = {};
+
+  // group per komoditas
   data.forEach(d => {
-    if (!grup[d.nama_komoditas]) {
-      grup[d.nama_komoditas] = {};
-    }
+    if (!grup[d.nama_komoditas]) grup[d.nama_komoditas] = {};
     grup[d.nama_komoditas][d.minggu_ke] = d.iph_mingguan;
   });
 
-  // build tabel
   let html = `
     <table class="table table-bordered table-sm table-dashboard">
       <thead>
@@ -327,25 +320,36 @@ function renderIphMingguan(data) {
           <th>No</th>
           <th>Komoditas</th>`;
 
-  for (let i = 1; i <= maxMinggu; i++) {
+  for (let i = 1; i <= maxM; i++) {
     html += `<th>M${i}</th>`;
   }
 
   html += `</tr></thead><tbody>`;
 
   let no = 1;
-  Object.keys(grup).forEach(komoditas => {
-    html += `
-      <tr>
-        <td>${no++}</td>
-        <td>${komoditas}</td>`;
+  Object.keys(grup).forEach(k => {
+    html += `<tr><td>${no++}</td><td>${k}</td>`;
 
-    for (let i = 1; i <= maxMinggu; i++) {
+    for (let i = 1; i <= maxM; i++) {
+      const cur = grup[k][i];
+      const prev = grup[k][i - 1];
+
+      let cls = 'iph-stabil';
+      let icon = '▬';
+
+      if (prev !== undefined && cur !== undefined) {
+        if (cur > prev) {
+          cls = 'iph-naik';
+          icon = '▲';
+        } else if (cur < prev) {
+          cls = 'iph-turun';
+          icon = '▼';
+        }
+      }
+
       html += `
-        <td class="text-end">
-          ${grup[komoditas][i] !== undefined
-            ? formatRupiah(grup[komoditas][i])
-            : '-'}
+        <td class="text-end ${cls}">
+          ${cur !== undefined ? `${icon} ${formatRupiah(cur)}` : '-'}
         </td>`;
     }
 
@@ -375,6 +379,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
