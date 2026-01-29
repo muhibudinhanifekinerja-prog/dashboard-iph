@@ -46,21 +46,31 @@
       text-align: center;
       font-weight: 600;
     }
-
     .table-dashboard td.text-end {
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
-
     /* Warna perubahan */
     .perubahan-naik {
       color: #dc3545;
       font-weight: 600;
     }
-
     .perubahan-turun {
       color: #198754;
       font-weight: 600;
+    }
+    /* MULTI SELECT CHECKBOX */
+    .dropdown-menu label {
+      font-size: 13px;
+      cursor: pointer;
+    }
+    
+    .dropdown-menu input[type="checkbox"] {
+      margin-right: 6px;
+    }
+    
+    .dropdown-menu li {
+      padding: 2px 0;
     }
   </style>
 </head>
@@ -102,21 +112,33 @@
 </nav>
 
 <div class="container my-4">
-
   <!-- FILTER -->
   <div class="card shadow-sm mb-4">
     <div class="card-body">
       <div class="row g-3 align-items-end">
-        <div class="col-md-3">
+       <div class="col-md-3">
           <label class="form-label">Komoditas</label>
-          <select id="filterKomoditas" class="form-select"></select>
+          <div class="dropdown w-100">
+            <button class="form-select text-start" type="button" data-bs-toggle="dropdown">
+              Pilih Komoditas
+            </button>
+            <ul class="dropdown-menu w-100 p-2" id="filterKomoditasList" style="max-height:260px; overflow:auto;">
+              <!-- diisi via JS -->
+            </ul>
+          </div>
         </div>
-
+        
         <div class="col-md-3">
           <label class="form-label">Pasar</label>
-          <select id="filterPasar" class="form-select"></select>
+          <div class="dropdown w-100">
+            <button class="form-select text-start" type="button" data-bs-toggle="dropdown">
+              Pilih Pasar
+            </button>
+            <ul class="dropdown-menu w-100 p-2" id="filterPasarList" style="max-height:260px; overflow:auto;">
+              <!-- diisi via JS -->
+            </ul>
+          </div>
         </div>
-
         <div class="col-md-2">
           <label class="form-label">Bulan</label>
           <select id="filterBulan" class="form-select">
@@ -181,3 +203,4 @@
 <script src="app-perkembangan.js"></script>
 </body>
 </html>
+
