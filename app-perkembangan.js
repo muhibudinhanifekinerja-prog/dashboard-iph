@@ -244,21 +244,88 @@ function renderPerubahanMingguan(data) {
   html += '</tbody></table>';
   el.innerHTML = html;
 }
+/*************************************************
+ * IPH MINGGUAN (KUMULATIF)
+ *************************************************/
+async function loadIphMingguan() {
+  const bulan = document.getElementById('filterBulan').value;
+  const tahun = getSelectedTahun();
 
+  let url =
+    `${SUPABASE_URL}/rest/v1/v_iph_kumulatif`
+    + `?tahun=eq.${tahun}`
+    + `&bulan=eq.${bulan}`
+    + `&order=nama_komoditas.asc`
+    + `&order=minggu_ke.asc`;
+
+  console.log('QUERY IPH:', url);
+
+  const res = await fetch(url, { headers });
+  const data = await res.json();
+
+  renderIphMingguan(data);
+}
+function renderIphMingguan(data) {
+  const el = document.getElementById('iphMingguan');
+
+  if (!data || data.length === 0) {
+    el.innerHTML = '<em>Tidak ada data</em>';
+    return;
+  }
+
+  const maxM = Math.max(...data.map(d => d.minggu_ke));
+  const grup = {};
+
+  data.forEach(d => {
+    if (!grup[d.nama_komoditas]) grup[d.nama_komoditas] = {};
+    grup[d.nama_komoditas][d.minggu_ke] = d.iph_mingguan;
+  });
+
+  let html = `
+    <table class="table table-bordered table-sm table-dashboard">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Komoditas</th>`;
+
+  for (let i = 1; i <= maxM; i++) {
+    html += `<th>M${i}</th>`;
+  }
+
+  html += `</tr></thead><tbody>`;
+
+  let no = 1;
+  Object.keys(grup).forEach(k => {
+    html += `<tr><td>${no++}</td><td>${k}</td>`;
+    for (let i = 1; i <= maxM; i++) {
+      html += `<td class="text-end">${formatRupiah(grup[k][i])}</td>`;
+    }
+    html += `</tr>`;
+  });
+
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
 /*************************************************
  * INIT
  *************************************************/
 document.getElementById('btnTampil').onclick = () => {
   loadHargaHarian();
-  loadIphMingguan();
-  loadPerubahanMingguan();
-};
 
+  if (typeof loadIphMingguan === 'function') {
+    loadIphMingguan();
+  }
+
+  if (typeof loadPerubahanMingguan === 'function') {
+    loadPerubahanMingguan();
+  }
+};
 document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterTahun();
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
