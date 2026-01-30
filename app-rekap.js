@@ -9,190 +9,115 @@ const HEADERS = {
   Authorization: `Bearer ${SUPABASE_KEY}`
 };
 
-/* ===============================
-   HELPER
-================================ */
+
+/*************************
+  HELPER
+*************************/
+const $ = id => document.getElementById(id);
+
 async function fetchJSON(url) {
   const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) throw new Error('Gagal fetch Supabase');
+  if (!res.ok) throw new Error("Fetch error");
   return res.json();
 }
 
-function qs(id) {
-  return document.getElementById(id);
+const rupiah = v =>
+  v == null ? "-" : "Rp " + Number(v).toLocaleString("id-ID");
+
+/*************************
+  LOAD FILTER DINAMIS
+*************************/
+async function loadFilter() {
+
+  // Tahun dari harga_harian
+  const tahunData = await fetchJSON(
+    `${SUPABASE_URL}/rest/v1/harga_harian?select=tanggal`
+  );
+
+  const tahunSet = new Set(
+    tahunData.map(d => new Date(d.tanggal).getFullYear())
+  );
+
+  [...tahunSet].sort().forEach(t => {
+    $("filterTahun").innerHTML += `<option value="${t}">${t}</option>`;
+  });
+
+  // Komoditas
+  const komoditas = await fetchJSON(
+    `${SUPABASE_URL}/rest/v1/komoditas?select=nama_komoditas&order=nama_komoditas`
+  );
+
+  komoditas.forEach(k => {
+    $("filterKomoditas").innerHTML +=
+      `<option value="${k.nama_komoditas}">${k.nama_komoditas}</option>`;
+  });
+
+  // Pasar
+  const pasar = await fetchJSON(
+    `${SUPABASE_URL}/rest/v1/pasar?select=nama_pasar&order=nama_pasar`
+  );
+
+  pasar.forEach(p => {
+    $("filterPasar").innerHTML +=
+      `<option value="${p.nama_pasar}">${p.nama_pasar}</option>`;
+  });
 }
 
-function rupiah(v) {
-  if (v === null || v === undefined) return '-';
-  return 'Rp ' + Number(v).toLocaleString('id-ID');
-}
+/*************************
+  FILTER QUERY
+*************************/
+function buildFilter() {
+  let q = `tahun=eq.${$("filterTahun").value}`;
 
-/* ===============================
-   FILTER
-================================ */
-function getFilter() {
-  return {
-    komoditas: qs('filterKomoditas').value,
-    pasar: qs('filterPasar').value,
-    tahun: qs('filterTahun').value,
-  };
-}
+  if ($("filterKomoditas").value)
+    q += `&nama_komoditas=eq.${encodeURIComponent($("filterKomoditas").value)}`;
 
-function buildFilterQuery(filter) {
-  let q = `tahun=eq.${filter.tahun}`;
-  if (filter.komoditas && filter.komoditas !== 'Semua Komoditas') {
-    q += `&nama_komoditas=eq.${encodeURIComponent(filter.komoditas)}`;
-  }
-  if (filter.pasar && filter.pasar !== 'Semua Pasar') {
-    q += `&nama_pasar=eq.${encodeURIComponent(filter.pasar)}`;
-  }
+  if ($("filterPasar").value)
+    q += `&nama_pasar=eq.${encodeURIComponent($("filterPasar").value)}`;
+
   return q;
 }
 
-/* ===============================
-   A. INFLASI
-================================ */
-async function renderInflasi(tahun) {
-  const url =
-    `${SUPABASE_URL}/rest/v1/v_inflasi_tahunan?` +
-    `tahun=eq.${tahun}&level_wilayah=eq.nasional`;
+/*************************
+  RENDER SEMUA REKAP
+*************************/
+async function loadRekap() {
+  const tahun = $("filterTahun").value;
+  $("labelTahunInflasi").innerText = tahun;
 
-  const data = await fetchJSON(url);
-  if (!data.length) return;
+  // Inflasi
+  const inflasi = await fetchJSON(
+    `${SUPABASE_URL}/rest/v1/v_inflasi_tahunan?tahun=eq.${tahun}&level_wilayah=eq.nasional`
+  );
 
-  qs('labelTahunInflasi').innerText = tahun;
-  qs('inflasiYoY').innerText = data[0].inflasi_yoy?.toFixed(2) + '%';
-  qs('inflasiMtM').innerText = data[0].inflasi_mtm?.toFixed(2) + '%';
-  qs('inflasiYtD').innerText = data[0].inflasi_ytd?.toFixed(2) + '%';
-}
+  if (inflasi[0]) {
+    $("inflasiYoY").innerText = inflasi[0].inflasi_yoy?.toFixed(2) + "%";
+    $("inflasiMtM").innerText = inflasi[0].inflasi_mtm?.toFixed(2) + "%";
+    $("inflasiYtD").innerText = inflasi[0].inflasi_ytd?.toFixed(2) + "%";
+  }
 
-/* ===============================
-   B. PERKEMBANGAN HARGA (LEVEL)
-================================ */
-async function renderHargaLevel(filter) {
-  const q = buildFilterQuery(filter);
-  const url = `${SUPABASE_URL}/rest/v1/v_harga_level_tahunan?${q}`;
-  const data = await fetchJSON(url);
+  // Perkembangan harga
+  const level = await fetchJSON(
+    `${SUPABASE_URL}/rest/v1/v_harga_level_tahunan?${buildFilter()}`
+  );
 
-  const tbody = qs('tblPerkembanganHarga');
-  tbody.innerHTML = '';
-
-  data.forEach((r, i) => {
-    tbody.insertAdjacentHTML('beforeend', `
+  $("tblPerkembanganHarga").innerHTML = "";
+  level.forEach((r, i) => {
+    $("tblPerkembanganHarga").innerHTML += `
       <tr>
         <td>${i + 1}</td>
         <td>${r.nama_komoditas}</td>
         <td>${rupiah(r.harga_awal_tahun)}</td>
         <td>${rupiah(r.harga_akhir_tahun)}</td>
         <td>${rupiah(r.rata_tahun)}</td>
-      </tr>
-    `);
+      </tr>`;
   });
 }
 
-/* ===============================
-   C. RATA-RATA MINGGUAN (DINAMIS)
-================================ */
-async function renderRataMingguan(filter) {
-  const q = buildFilterQuery(filter);
-  const url = `${SUPABASE_URL}/rest/v1/v_rata_mingguan_tahunan?${q}`;
-  const data = await fetchJSON(url);
-
-  if (!data.length) return;
-
-  // susun struktur: bulan -> minggu
-  const weeks = [...new Set(data.map(d => `${d.bulan}-${d.minggu_ke}`))]
-    .sort((a, b) => {
-      const [ba, wa] = a.split('-').map(Number);
-      const [bb, wb] = b.split('-').map(Number);
-      return ba !== bb ? ba - bb : wa - wb;
-    });
-
-  // HEADER
-  qs('theadMingguan').innerHTML = `
-    <tr>
-      <th>No</th>
-      <th>Komoditas</th>
-      ${weeks.map(w => `<th>${w}</th>`).join('')}
-    </tr>
-  `;
-
-  // MAP DATA
-  const map = {};
-  data.forEach(d => {
-    map[d.nama_komoditas] ??= {};
-    map[d.nama_komoditas][`${d.bulan}-${d.minggu_ke}`] = d.rata_mingguan;
-  });
-
-  // BODY
-  const tbody = qs('tblRataMingguan');
-  tbody.innerHTML = '';
-
-  Object.entries(map).forEach(([komoditas, vals], i) => {
-    tbody.insertAdjacentHTML('beforeend', `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${komoditas}</td>
-        ${weeks.map(w => `<td>${rupiah(vals[w])}</td>`).join('')}
-      </tr>
-    `);
-  });
-}
-
-/* ===============================
-   D. % PERUBAHAN MINGGUAN
-================================ */
-async function renderPerubahan(filter) {
-  const q = buildFilterQuery(filter);
-  const url = `${SUPABASE_URL}/rest/v1/v_perubahan_mingguan_tahunan?${q}`;
-  const data = await fetchJSON(url);
-
-  if (!data.length) return;
-
-  const weeks = [...new Set(data.map(d => `${d.bulan}-${d.minggu_ke}`))]
-    .sort((a, b) => {
-      const [ba, wa] = a.split('-').map(Number);
-      const [bb, wb] = b.split('-').map(Number);
-      return ba !== bb ? ba - bb : wa - wb;
-    });
-
-  qs('theadPerubahan').innerHTML = `
-    <tr>
-      <th>Komoditas</th>
-      ${weeks.map(w => `<th>${w}</th>`).join('')}
-    </tr>
-  `;
-
-  const map = {};
-  data.forEach(d => {
-    map[d.nama_komoditas] ??= {};
-    map[d.nama_komoditas][`${d.bulan}-${d.minggu_ke}`] = d.persen_perubahan;
-  });
-
-  const tbody = qs('tblPerubahanHarga');
-  tbody.innerHTML = '';
-
-  Object.entries(map).forEach(([komoditas, vals]) => {
-    tbody.insertAdjacentHTML('beforeend', `
-      <tr>
-        <td>${komoditas}</td>
-        ${weeks.map(w => {
-          const v = vals[w];
-          return `<td>${v === null || v === undefined ? '-' : v + '%'}</td>`;
-        }).join('')}
-      </tr>
-    `);
-  });
-}
-
-/* ===============================
-   TRIGGER UTAMA
-================================ */
-qs('btnTampilkan').addEventListener('click', async () => {
-  const filter = getFilter();
-
-  await renderInflasi(filter.tahun);
-  await renderHargaLevel(filter);
-  await renderRataMingguan(filter);
-  await renderPerubahan(filter);
+/*************************
+  INIT
+*************************/
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadFilter();
+  $("btnTampilkan").addEventListener("click", loadRekap);
 });
