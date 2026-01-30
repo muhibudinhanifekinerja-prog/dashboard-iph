@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Rekap | Dashboard Harga Pangan</title>
+  <title>Rekap Tahunan | Dashboard Harga Pangan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <!-- Bootstrap -->
@@ -11,30 +11,46 @@
 
   <style>
     body {
-      font-size: 14px;
       background: #f8f9fa;
+      font-size: 13px;
     }
+
     .card {
       border-radius: 10px;
     }
-    .table th {
-      background: #f1f3f5;
-      white-space: nowrap;
+
+    .section-title {
+      font-weight: 600;
+      margin-bottom: 12px;
     }
+
+    .table th,
     .table td {
       white-space: nowrap;
-    }
-    .note {
+      vertical-align: middle;
       font-size: 12px;
-      color: #6c757d;
+    }
+
+    .rekap-scroll {
+      overflow-x: auto;
+    }
+
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 12mm;
+      }
+      .no-print {
+        display: none !important;
+      }
     }
   </style>
 </head>
 
 <body>
 
-<!-- NAVBAR (IDENTIK DENGAN rekap(1).html) -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+<!-- NAVBAR (SUDAH SINKRON) -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm no-print">
   <div class="container-fluid">
     <a class="navbar-brand fw-bold" href="index.html">
       <i class="bi bi-bar-chart-line-fill me-1"></i>
@@ -48,128 +64,145 @@
     <div class="collapse navbar-collapse" id="navMenu">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item">
-          <a class="nav-link" href="index.html">
-            <i class="bi bi-house-door-fill me-1"></i>
-            Beranda
-          </a>
+          <a class="nav-link" href="index.html">Beranda</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="perkembangan.html">
-            <i class="bi bi-graph-up-arrow me-1"></i>
-            Perkembangan Harga
-          </a>
+          <a class="nav-link" href="perkembangan.html">Perkembangan Harga</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="inflasi.html">
-            <i class="bi bi-bar-chart-line me-1"></i>
-            Inflasi
-          </a>
+          <a class="nav-link" href="inflasi.html">Inflasi</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link active" href="rekap.html">
-            <i class="bi bi-file me-1"></i>
-            Rekap
-          </a>
+          <a class="nav-link active" href="rekap.html">Rekap</a>
         </li>
       </ul>
     </div>
   </div>
 </nav>
 
-<div class="container my-4">
+<div class="container-fluid my-4">
 
   <!-- FILTER -->
-  <div class="card shadow-sm mb-4">
+  <div class="card shadow-sm mb-4 no-print">
     <div class="card-body">
-      <h6 class="mb-3">
-        <i class="bi bi-funnel-fill me-1"></i>
-        Filter Rekap Tahunan
-      </h6>
-
-      <div class="row g-3">
+      <div class="row g-3 align-items-end">
         <div class="col-md-4">
           <label class="form-label">Komoditas</label>
           <select class="form-select" id="filterKomoditas">
-            <option value="">Semua Komoditas</option>
+            <option>Semua Komoditas</option>
           </select>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label">Pasar</label>
           <select class="form-select" id="filterPasar">
-            <option value="">Semua Pasar</option>
+            <option>Semua Pasar</option>
           </select>
         </div>
 
         <div class="col-md-2">
           <label class="form-label">Tahun</label>
-          <select class="form-select" id="filterTahun"></select>
+          <select class="form-select" id="filterTahun">
+            <option>2026</option>
+            <option>2025</option>
+            <option>2024</option>
+          </select>
         </div>
 
-        <div class="col-md-2 d-grid">
-          <button class="btn btn-primary mt-4" id="btnTampilkan">
+        <div class="col-md-3 d-grid">
+          <button class="btn btn-primary" id="btnTampilkan">
             <i class="bi bi-search me-1"></i>
-            Tampilkan
+            Tampilkan Rekap
           </button>
         </div>
       </div>
+    </div>
+  </div>
 
-      <div class="note mt-2">
-        * Rata-rata mingguan dihitung dari data yang tersedia (Senin–Jumat)
+  <!-- A. INFLASI -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="section-title">
+        A. Ringkasan Inflasi Tahun <span id="labelTahunInflasi">2026</span>
+      </div>
+
+      <div class="row text-center">
+        <div class="col-md-4">
+          <div class="fw-semibold">Inflasi YoY</div>
+          <div id="inflasiYoY">–</div>
+        </div>
+        <div class="col-md-4">
+          <div class="fw-semibold">Inflasi MtM</div>
+          <div id="inflasiMtM">–</div>
+        </div>
+        <div class="col-md-4">
+          <div class="fw-semibold">Inflasi YtD</div>
+          <div id="inflasiYtD">–</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- JENIS REKAP -->
+  <!-- B. PERKEMBANGAN HARGA -->
   <div class="card shadow-sm mb-4">
     <div class="card-body">
-      <h6 class="mb-3">
-        <i class="bi bi-list-check me-1"></i>
-        Jenis Rekap
-      </h6>
-
-      <div class="form-check">
-        <input class="form-check-input" type="radio" name="jenisRekap" id="rekapRata" checked>
-        <label class="form-check-label" for="rekapRata">
-          Rata-rata Harga Mingguan (Tahun X)
-        </label>
+      <div class="section-title">
+        B. Perkembangan Harga (Level)
       </div>
 
-      <div class="form-check">
-        <input class="form-check-input" type="radio" name="jenisRekap" id="rekapPerubahan">
-        <label class="form-check-label" for="rekapPerubahan">
-          Persentase Perubahan Harga Mingguan
-        </label>
-      </div>
-    </div>
-  </div>
-
-  <!-- PREVIEW -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <h6 class="mb-3">
-        <i class="bi bi-table me-1"></i>
-        Preview Rekap Tahunan
-      </h6>
-
-      <div class="table-responsive">
-        <table class="table table-bordered table-sm align-middle">
-          <thead>
+      <div class="rekap-scroll">
+        <table class="table table-bordered table-sm">
+          <thead class="table-light">
             <tr>
-              <th>Minggu ke</th>
-              <th>Periode</th>
-              <th>Rata-rata Harga</th>
-              <th>Jumlah Data</th>
-              <th>% Perubahan</th>
-              <th>Status</th>
+              <th>No</th>
+              <th>Komoditas</th>
+              <th>Harga Awal Tahun</th>
+              <th>Harga Akhir Tahun</th>
+              <th>Rata-rata Tahun</th>
             </tr>
           </thead>
-          <tbody id="rekapTable">
-            <tr>
-              <td colspan="6" class="text-center text-muted">
-                Klik <strong>Tampilkan</strong> untuk melihat data
-              </td>
-            </tr>
+          <tbody id="tblPerkembanganHarga">
+            <!-- diisi JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- C. RATA-RATA MINGGUAN -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="section-title">
+        C. Rata-rata Harga Mingguan
+      </div>
+
+      <div class="rekap-scroll">
+        <table class="table table-bordered table-sm">
+          <thead class="table-light" id="theadMingguan">
+            <!-- header minggu dinamis -->
+          </thead>
+          <tbody id="tblRataMingguan">
+            <!-- diisi JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- D. PERSENTASE PERUBAHAN -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="section-title">
+        D. Persentase Perubahan Harga Mingguan
+      </div>
+
+      <div class="rekap-scroll">
+        <table class="table table-bordered table-sm">
+          <thead class="table-light" id="theadPerubahan">
+            <!-- header minggu dinamis -->
+          </thead>
+          <tbody id="tblPerubahanHarga">
+            <!-- diisi JS -->
           </tbody>
         </table>
       </div>
@@ -177,15 +210,13 @@
   </div>
 
   <!-- EXPORT -->
-  <div class="card shadow-sm">
-    <div class="card-body d-flex gap-2">
-      <button class="btn btn-success">
-        <i class="bi bi-file-earmark-excel me-1"></i>
-        Export Excel
+  <div class="card shadow-sm no-print">
+    <div class="card-body text-end">
+      <button class="btn btn-success me-2">
+        <i class="bi bi-file-earmark-excel"></i> Export Excel
       </button>
       <button class="btn btn-danger">
-        <i class="bi bi-file-earmark-pdf me-1"></i>
-        Export PDF
+        <i class="bi bi-file-earmark-pdf"></i> Export PDF
       </button>
     </div>
   </div>
