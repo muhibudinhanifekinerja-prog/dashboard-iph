@@ -1,158 +1,192 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Rekap Tahunan | Dashboard Harga Pangan</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
   <style>
-    body {
-      background: #f8f9fa;
-      font-size: 13px;
-    }
+    /* =============================
+   GLOBAL
+============================= */
+body {
+  background-color: #f5f7fa;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
 
-    .card {
-      border-radius: 10px;
-    }
+.card {
+  border-radius: 10px;
+  border: 1px solid #e3e6ea;
+}
 
-    .section-title {
-      font-weight: 600;
-      margin-bottom: 12px;
-    }
+.card-title {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 10px;
+}
 
-    .table th,
-    .table td {
-      white-space: nowrap;
-      vertical-align: middle;
-      font-size: 12px;
-    }
+/* =============================
+   FILTER
+============================= */
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
 
-    .rekap-scroll {
-      overflow-x: auto;
-    }
+.form-select,
+.btn {
+  font-size: 13px;
+}
 
-    @media print {
-      @page {
-        size: A4 landscape;
-        margin: 12mm;
-      }
-      .no-print {
-        display: none !important;
-      }
-    }
+/* =============================
+   TABLE SCROLL
+============================= */
+.table-scroll {
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+}
+
+/* tabel kecil & rapat */
+.table {
+  margin-bottom: 0;
+}
+
+.table th,
+.table td {
+  font-size: 13px;
+  padding: 6px 8px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* =============================
+   STICKY HEADER
+============================= */
+.table-scroll thead th {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa;
+  z-index: 3;
+  border-bottom: 2px solid #ced4da;
+}
+
+/* =============================
+   ALIGNMENT
+============================= */
+.table td:nth-child(n+3) {
+  text-align: right; /* kolom angka */
+}
+
+.table th {
+  text-align: center;
+}
+
+/* =============================
+   SECTION KHUSUS
+============================= */
+
+/* Inflasi summary */
+#inflasiYoY,
+#inflasiMtM,
+#inflasiYtD {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* jarak antar card */
+.card + .card {
+  margin-top: 12px;
+}
+
+/* =============================
+   RESPONSIVE
+============================= */
+@media (max-width: 768px) {
+  .table-scroll {
+    max-height: 300px;
+  }
+
+  .card-title {
+    font-size: 14px;
+  }
+}
+
   </style>
 </head>
 
 <body>
 
-<!-- NAVBAR (SUDAH SINKRON) -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm no-print">
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
   <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="index.html">
-      <i class="bi bi-bar-chart-line-fill me-1"></i>
-      Dashboard Harga Pangan
-    </a>
-
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <div class="collapse navbar-collapse" id="navMenu">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="index.html">Beranda</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="perkembangan.html">Perkembangan Harga</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="inflasi.html">Inflasi</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link active" href="rekap.html">Rekap</a>
-        </li>
-      </ul>
-    </div>
+    <span class="navbar-brand fw-semibold">Dashboard Harga Pangan</span>
   </div>
 </nav>
 
-<div class="container-fluid my-4">
+<div class="container-fluid mt-3">
 
   <!-- FILTER -->
-  <div class="card shadow-sm mb-4 no-print">
+  <div class="card mb-3">
     <div class="card-body">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-4">
+      <div class="row g-2 align-items-end">
+
+        <div class="col-md-3">
           <label class="form-label">Komoditas</label>
-          <select class="form-select" id="filterKomoditas">
-            <option>Semua Komoditas</option>
+          <select id="filterKomoditas" class="form-select">
+            <option value="">Semua Komoditas</option>
           </select>
         </div>
 
         <div class="col-md-3">
           <label class="form-label">Pasar</label>
-          <select class="form-select" id="filterPasar">
-            <option>Semua Pasar</option>
+          <select id="filterPasar" class="form-select">
+            <option value="">Semua Pasar</option>
           </select>
         </div>
 
         <div class="col-md-2">
           <label class="form-label">Tahun</label>
-          <select class="form-select" id="filterTahun">
-            <option>2026</option>
-            <option>2025</option>
-            <option>2024</option>
+          <select id="filterTahun" class="form-select">
+            <!-- diisi JS -->
           </select>
         </div>
 
-        <div class="col-md-3 d-grid">
-          <button class="btn btn-primary" id="btnTampilkan">
-            <i class="bi bi-search me-1"></i>
+        <div class="col-md-2">
+          <button id="btnTampilkan" class="btn btn-primary w-100">
             Tampilkan Rekap
           </button>
         </div>
+
       </div>
     </div>
   </div>
 
   <!-- A. INFLASI -->
-  <div class="card shadow-sm mb-4">
+  <div class="card mb-3">
     <div class="card-body">
-      <div class="section-title">
-        A. Ringkasan Inflasi Tahun <span id="labelTahunInflasi">2026</span>
-      </div>
-
+      <div class="card-title">A. Ringkasan Inflasi Tahun <span id="labelTahunInflasi">-</span></div>
       <div class="row text-center">
-        <div class="col-md-4">
-          <div class="fw-semibold">Inflasi YoY</div>
-          <div id="inflasiYoY">–</div>
-        </div>
-        <div class="col-md-4">
-          <div class="fw-semibold">Inflasi MtM</div>
-          <div id="inflasiMtM">–</div>
-        </div>
-        <div class="col-md-4">
-          <div class="fw-semibold">Inflasi YtD</div>
-          <div id="inflasiYtD">–</div>
-        </div>
+        <div class="col">Inflasi YoY<br><strong id="inflasiYoY">-</strong></div>
+        <div class="col">Inflasi MtM<br><strong id="inflasiMtM">-</strong></div>
+        <div class="col">Inflasi YtD<br><strong id="inflasiYtD">-</strong></div>
       </div>
     </div>
   </div>
 
   <!-- B. PERKEMBANGAN HARGA -->
-  <div class="card shadow-sm mb-4">
+  <div class="card mb-3">
     <div class="card-body">
-      <div class="section-title">
-        B. Perkembangan Harga (Level)
-      </div>
-
-      <div class="rekap-scroll">
+      <div class="card-title">B. Perkembangan Harga (Level)</div>
+      <div class="table-scroll">
         <table class="table table-bordered table-sm">
-          <thead class="table-light">
+          <thead>
             <tr>
               <th>No</th>
               <th>Komoditas</th>
@@ -161,68 +195,40 @@
               <th>Rata-rata Tahun</th>
             </tr>
           </thead>
-          <tbody id="tblPerkembanganHarga">
-            <!-- diisi JS -->
-          </tbody>
+          <tbody id="tblPerkembanganHarga"></tbody>
         </table>
       </div>
     </div>
   </div>
 
   <!-- C. RATA-RATA MINGGUAN -->
-  <div class="card shadow-sm mb-4">
+  <div class="card mb-3">
     <div class="card-body">
-      <div class="section-title">
-        C. Rata-rata Harga Mingguan
-      </div>
-
-      <div class="rekap-scroll">
+      <div class="card-title">C. Rata-rata Harga Mingguan</div>
+      <div class="table-scroll">
         <table class="table table-bordered table-sm">
-          <thead class="table-light" id="theadMingguan">
-            <!-- header minggu dinamis -->
-          </thead>
-          <tbody id="tblRataMingguan">
-            <!-- diisi JS -->
-          </tbody>
+          <thead id="theadMingguan"></thead>
+          <tbody id="tblRataMingguan"></tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- D. PERSENTASE PERUBAHAN -->
-  <div class="card shadow-sm mb-4">
+  <!-- D. PERUBAHAN -->
+  <div class="card mb-3">
     <div class="card-body">
-      <div class="section-title">
-        D. Persentase Perubahan Harga Mingguan
-      </div>
-
-      <div class="rekap-scroll">
+      <div class="card-title">D. Persentase Perubahan Harga Mingguan</div>
+      <div class="table-scroll">
         <table class="table table-bordered table-sm">
-          <thead class="table-light" id="theadPerubahan">
-            <!-- header minggu dinamis -->
-          </thead>
-          <tbody id="tblPerubahanHarga">
-            <!-- diisi JS -->
-          </tbody>
+          <thead id="theadPerubahan"></thead>
+          <tbody id="tblPerubahanHarga"></tbody>
         </table>
       </div>
-    </div>
-  </div>
-
-  <!-- EXPORT -->
-  <div class="card shadow-sm no-print">
-    <div class="card-body text-end">
-      <button class="btn btn-success me-2">
-        <i class="bi bi-file-earmark-excel"></i> Export Excel
-      </button>
-      <button class="btn btn-danger">
-        <i class="bi bi-file-earmark-pdf"></i> Export PDF
-      </button>
     </div>
   </div>
 
 </div>
+
 <script src="app-rekap.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
