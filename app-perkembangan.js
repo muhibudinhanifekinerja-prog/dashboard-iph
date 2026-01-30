@@ -254,7 +254,8 @@ function renderPerubahanMingguan(data) {
     minggu.forEach(m => {
       const v = grup[k][m];
       let cls = v > 0 ? 'perubahan-naik' : v < 0 ? 'perubahan-turun' : '';
-      html += `<td class="text-end ${cls}">${v !== undefined ? Math.round(v) + '%' : '-'}</td>`;
+      html += `<td class="text-end ${cls}">${v !== undefined ? Number(v).toFixed(2) + ' %' : '-'}
+</td>`;
     });
     html += `</tr>`;
   });
@@ -379,6 +380,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
