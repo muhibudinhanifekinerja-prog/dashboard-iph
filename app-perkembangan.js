@@ -8,6 +8,15 @@ const headers = {
   apikey: SUPABASE_KEY,
   Authorization: `Bearer ${SUPABASE_KEY}`
 };
+/*************************************************
+ * KONFIGURASI SUPABASE
+ *************************************************/
+const SUPABASE_URL = "https://hkllhgmfbnepgtfnrxuj.supabase.co";
+const SUPABASE_KEY = "ISI_API_KEY_ANDA";
+const headers = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`
+};
 
 /*************************************************
  * HELPER
@@ -16,7 +25,6 @@ function formatRupiah(val) {
   if (val === null || val === undefined || isNaN(val)) return '-';
   return 'Rp ' + Math.round(val).toLocaleString('id-ID');
 }
-
 function getSelectedTahun() {
   return document.getElementById('filterTahun').value;
 }
@@ -27,7 +35,7 @@ function getCheckedValues(containerId) {
 }
 
 /*************************************************
- * LOAD FILTER
+ * FILTER
  *************************************************/
 async function loadFilterTahun() {
   const res = await fetch(
@@ -37,9 +45,7 @@ async function loadFilterTahun() {
   const data = await res.json();
   const el = document.getElementById('filterTahun');
   el.innerHTML = '';
-  data.forEach(d => {
-    el.innerHTML += `<option value="${d.tahun}">${d.tahun}</option>`;
-  });
+  data.forEach(d => el.innerHTML += `<option value="${d.tahun}">${d.tahun}</option>`);
 }
 
 async function loadFilterKomoditas() {
@@ -49,18 +55,15 @@ async function loadFilterKomoditas() {
   );
   const data = await res.json();
   const el = document.getElementById('filterKomoditasList');
-
   el.innerHTML = '';
   data.forEach(d => {
     el.innerHTML += `
-      <li>
-        <label>
-          <input type="checkbox" value="${d.id_komoditas}">
-          ${d.nama_komoditas}
-        </label>
-      </li>`;
+      <li><label>
+        <input type="checkbox" value="${d.id_komoditas}"> ${d.nama_komoditas}
+      </label></li>`;
   });
 }
+
 async function loadFilterPasar() {
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/pasar?select=id_pasar,nama_pasar&order=nama_pasar.asc`,
@@ -68,32 +71,27 @@ async function loadFilterPasar() {
   );
   const data = await res.json();
   const el = document.getElementById('filterPasarList');
-
   el.innerHTML = '';
   data.forEach(d => {
     el.innerHTML += `
-      <li>
-        <label>
-          <input type="checkbox" value="${d.id_pasar}">
-          ${d.nama_pasar}
-        </label>
-      </li>`;
+      <li><label>
+        <input type="checkbox" value="${d.id_pasar}"> ${d.nama_pasar}
+      </label></li>`;
   });
 }
+
 /*************************************************
  * HARGA HARIAN
  *************************************************/
 async function loadHargaHarian() {
   const bulan = document.getElementById('filterBulan').value;
   const tahun = getSelectedTahun();
-
   const komoditasArr = getCheckedValues('filterKomoditasList');
   const pasarArr = getCheckedValues('filterPasarList');
 
   const start = `${tahun}-${bulan.padStart(2, '0')}-01`;
   const end = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
 
-  // ⚠️ HARUS let
   let url =
     `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap`
     + `?tanggal=gte.${start}`
@@ -102,150 +100,118 @@ async function loadHargaHarian() {
     + `&order=nama_pasar.asc`
     + `&order=tanggal.asc`;
 
-  // filter komoditas multiple
-  if (komoditasArr.length > 0) {
-    url += `&id_komoditas=in.(${komoditasArr.join(',')})`;
-  }
-
-  // filter pasar multiple
-  if (pasarArr.length > 0) {
-    url += `&id_pasar=in.(${pasarArr.join(',')})`;
-  }
-
-  console.log('QUERY SUPABASE:', url);
+  if (komoditasArr.length) url += `&id_komoditas=in.(${komoditasArr.join(',')})`;
+  if (pasarArr.length) url += `&id_pasar=in.(${pasarArr.join(',')})`;
 
   const res = await fetch(url, { headers });
-  const data = await res.json();
-
-  renderHargaHarian(data);
+  renderHargaHarian(await res.json());
 }
+
 function renderHargaHarian(data) {
   const el = document.getElementById('hargaHarian');
+  if (!data.length) return el.innerHTML = '<em>Tidak ada data</em>';
 
-  if (!data || !data.length) {
-    el.innerHTML = '<em>Tidak ada data</em>';
-    return;
-  }
-
-  // ===============================
-  // Ambil daftar tanggal unik
-  // ===============================
-  const tanggalList = [...new Set(data.map(d => d.tanggal))]
-    .sort((a, b) => a.localeCompare(b));
-
-  // ===============================
-  // Group: Komoditas + Pasar
-  // ===============================
+  const tanggalList = [...new Set(data.map(d => d.tanggal))].sort();
   const grup = {};
 
   data.forEach(d => {
     const key = `${d.nama_komoditas}||${d.nama_pasar}`;
-    if (!grup[key]) {
-      grup[key] = {
-        komoditas: d.nama_komoditas,
-        pasar: d.nama_pasar,
-        harga: {}
-      };
-    }
-    grup[key].harga[d.tanggal] = d.harga;
+    if (!grup[key]) grup[key] = { k: d.nama_komoditas, p: d.nama_pasar, h: {} };
+    grup[key].h[d.tanggal] = d.harga;
   });
 
-  // ===============================
-  // Build tabel
-  // ===============================
-  let html = `
-    <table class="table table-bordered table-sm table-dashboard">
-      <thead>
-        <tr>
-          <th>No</th>
-          <th>Komoditas</th>
-          <th>Pasar</th>`;
-
-  tanggalList.forEach(tgl => {
-    html += `<th>${tgl}</th>`;
-  });
-
+  let html = `<table class="table table-bordered table-sm table-dashboard">
+  <thead><tr><th>No</th><th>Komoditas</th><th>Pasar</th>`;
+  tanggalList.forEach(t => html += `<th>${t}</th>`);
   html += `</tr></thead><tbody>`;
 
   let no = 1;
-  Object.values(grup).forEach(row => {
-    html += `
-      <tr>
-        <td>${no++}</td>
-        <td>${row.komoditas}</td>
-        <td>${row.pasar}</td>`;
-
-    tanggalList.forEach(tgl => {
-      const harga = row.harga[tgl];
-      html += `
-        <td class="text-end">
-          ${harga !== undefined ? formatRupiah(harga) : '-'}
-        </td>`;
-    });
-
+  Object.values(grup).forEach(r => {
+    html += `<tr><td>${no++}</td><td>${r.k}</td><td>${r.p}</td>`;
+    tanggalList.forEach(t =>
+      html += `<td class="text-end">${r.h[t] ? formatRupiah(r.h[t]) : '-'}</td>`
+    );
     html += `</tr>`;
   });
 
-  html += `</tbody></table>`;
-  el.innerHTML = html;
+  el.innerHTML = html + `</tbody></table>`;
 }
 
 /*************************************************
- * PERUBAHAN MINGGUAN
+ * IPH MINGGUAN
+ *************************************************/
+async function loadIphMingguan() {
+  const bulan = document.getElementById('filterBulan').value;
+  const tahun = getSelectedTahun();
+  const komoditasArr = getCheckedValues('filterKomoditasList');
+  const pasarArr = getCheckedValues('filterPasarList');
+
+  let url =
+    `${SUPABASE_URL}/rest/v1/v_iph_mingguan`
+    + `?tahun=eq.${tahun}&bulan=eq.${bulan}`
+    + `&order=nama_komoditas.asc&order=minggu_ke.asc`;
+
+  if (komoditasArr.length) url += `&id_komoditas=in.(${komoditasArr.join(',')})`;
+  if (pasarArr.length) url += `&id_pasar=in.(${pasarArr.join(',')})`;
+
+  renderIphMingguan(await (await fetch(url, { headers })).json());
+}
+
+function renderIphMingguan(data) {
+  const el = document.getElementById('iphMingguan');
+  if (!data.length) return el.innerHTML = '<em>Tidak ada data</em>';
+
+  const maxM = Math.max(...data.map(d => d.minggu_ke));
+  const grup = {};
+  data.forEach(d => {
+    if (!grup[d.nama_komoditas]) grup[d.nama_komoditas] = {};
+    grup[d.nama_komoditas][d.minggu_ke] = d.harga_mingguan;
+  });
+
+  let html = `<table class="table table-bordered table-sm table-dashboard">
+  <thead><tr><th>Komoditas</th>`;
+  for (let i = 1; i <= maxM; i++) html += `<th>M${i}</th>`;
+  html += `</tr></thead><tbody>`;
+
+  Object.keys(grup).forEach(k => {
+    html += `<tr><td>${k}</td>`;
+    for (let i = 1; i <= maxM; i++) {
+      html += `<td class="text-end">${grup[k][i] ? formatRupiah(grup[k][i]) : '-'}</td>`;
+    }
+    html += `</tr>`;
+  });
+
+  el.innerHTML = html + `</tbody></table>`;
+}
+
+/*************************************************
+ * PERUBAHAN MINGGUAN (%)
  *************************************************/
 async function loadPerubahanMingguan() {
   const bulan = document.getElementById('filterBulan').value;
   const tahun = getSelectedTahun();
 
-  const komoditasArr = getCheckedValues('filterKomoditasList');
-  const pasarArr = getCheckedValues('filterPasarList');
-
-  let url =
+  const url =
     `${SUPABASE_URL}/rest/v1/v_iph_perubahan_mingguan`
-    + `?tahun=eq.${tahun}`
-    + `&bulan=eq.${bulan}`
-    + `&order=nama_komoditas.asc`
-    + `&order=minggu_ke.asc`;
+    + `?tahun=eq.${tahun}&bulan=eq.${bulan}`
+    + `&order=nama_komoditas.asc&order=minggu_ke.asc`;
 
-  // 🔹 FILTER KOMODITAS
-  if (komoditasArr.length > 0) {
-    url += `&id_komoditas=in.(${komoditasArr.join(',')})`;
-  }
-
-  // 🔹 FILTER PASAR (JIKA ADA DI VIEW)
-  if (pasarArr.length > 0) {
-    url += `&id_pasar=in.(${pasarArr.join(',')})`;
-  }
-
-  console.log('QUERY PERUBAHAN:', url);
-
-  const res = await fetch(url, { headers });
-  const data = await res.json();
-
-  renderPerubahanMingguan(data);
+  renderPerubahanMingguan(await (await fetch(url, { headers })).json());
 }
+
 function renderPerubahanMingguan(data) {
   const el = document.getElementById('perubahanPersen');
+  if (!data.length) return el.innerHTML = '<em>Tidak ada data</em>';
 
-  if (!data.length) {
-    el.innerHTML = '<em>Tidak ada data</em>';
-    return;
-  }
-
-  const minggu = [...new Set(data.map(d => d.minggu_ke))].sort((a, b) => a - b);
+  const minggu = [...new Set(data.map(d => d.minggu_ke))];
   const grup = {};
-
   data.forEach(d => {
     if (!grup[d.nama_komoditas]) grup[d.nama_komoditas] = {};
     grup[d.nama_komoditas][d.minggu_ke] = d.persen_perubahan;
   });
 
-  let html = `
-    <table class="table table-bordered table-sm table-dashboard">
-      <thead>
-        <tr>
-          <th>Komoditas</th>`;
-
+  let html = `<table class="table table-bordered table-sm table-dashboard">
+  <thead><tr><th>Komoditas</th>`;
   minggu.forEach(m => html += `<th>M${m}</th>`);
   html += `</tr></thead><tbody>`;
 
@@ -253,112 +219,13 @@ function renderPerubahanMingguan(data) {
     html += `<tr><td>${k}</td>`;
     minggu.forEach(m => {
       const v = grup[k][m];
-      let cls = v > 0 ? 'perubahan-naik' : v < 0 ? 'perubahan-turun' : '';
-      html += `<td class="text-end ${cls}">${v !== undefined ? Number(v).toFixed(2) + ' %' : '-'}
-</td>`;
+      const cls = v > 0 ? 'perubahan-naik' : v < 0 ? 'perubahan-turun' : '';
+      html += `<td class="text-end ${cls}">${v != null ? v.toFixed(2)+' %' : '-'}</td>`;
     });
     html += `</tr>`;
   });
 
-  html += '</tbody></table>';
-  el.innerHTML = html;
-}
-/*************************************************
- * IPH MINGGUAN (KUMULATIF)
- *************************************************/
-async function loadIphMingguan() {
-  const bulan = document.getElementById('filterBulan').value;
-  const tahun = getSelectedTahun();
-
-  const komoditasArr = getCheckedValues('filterKomoditasList');
-  const pasarArr = getCheckedValues('filterPasarList');
-
-  let url =
-    `${SUPABASE_URL}/rest/v1/v_iph_kumulatif`
-    + `?tahun=eq.${tahun}`
-    + `&bulan=eq.${bulan}`
-    + `&order=nama_komoditas.asc`
-    + `&order=minggu_ke.asc`;
-
-  // 🔹 filter komoditas
-  if (komoditasArr.length > 0) {
-    url += `&id_komoditas=in.(${komoditasArr.join(',')})`;
-  }
-
-  // 🔹 filter pasar → AGREGAT TERPILIH
-  if (pasarArr.length > 0) {
-    url += `&id_pasar=in.(${pasarArr.join(',')})`;
-  }
-
-  console.log('QUERY IPH:', url);
-
-  const res = await fetch(url, { headers });
-  const data = await res.json();
-
-  renderIphMingguan(data);
-}
-function renderIphMingguan(data) {
-  const el = document.getElementById('iphMingguan');
-
-  if (!data || data.length === 0) {
-    el.innerHTML = '<em>Tidak ada data</em>';
-    return;
-  }
-
-  const maxM = Math.max(...data.map(d => d.minggu_ke));
-  const grup = {};
-
-  // group per komoditas
-  data.forEach(d => {
-    if (!grup[d.nama_komoditas]) grup[d.nama_komoditas] = {};
-    grup[d.nama_komoditas][d.minggu_ke] = d.iph_mingguan;
-  });
-
-  let html = `
-    <table class="table table-bordered table-sm table-dashboard">
-      <thead>
-        <tr>
-          <th>No</th>
-          <th>Komoditas</th>`;
-
-  for (let i = 1; i <= maxM; i++) {
-    html += `<th>M${i}</th>`;
-  }
-
-  html += `</tr></thead><tbody>`;
-
-  let no = 1;
-  Object.keys(grup).forEach(k => {
-    html += `<tr><td>${no++}</td><td>${k}</td>`;
-
-    for (let i = 1; i <= maxM; i++) {
-      const cur = grup[k][i];
-      const prev = grup[k][i - 1];
-
-      let cls = 'iph-stabil';
-      let icon = '▬';
-
-      if (prev !== undefined && cur !== undefined) {
-        if (cur > prev) {
-          cls = 'iph-naik';
-          icon = '▲';
-        } else if (cur < prev) {
-          cls = 'iph-turun';
-          icon = '▼';
-        }
-      }
-
-      html += `
-        <td class="text-end ${cls}">
-          ${cur !== undefined ? `${icon} ${formatRupiah(cur)}` : '-'}
-        </td>`;
-    }
-
-    html += `</tr>`;
-  });
-
-  html += `</tbody></table>`;
-  el.innerHTML = html;
+  el.innerHTML = html + `</tbody></table>`;
 }
 
 /*************************************************
@@ -366,25 +233,12 @@ function renderIphMingguan(data) {
  *************************************************/
 document.getElementById('btnTampil').onclick = () => {
   loadHargaHarian();
-
-  if (typeof loadIphMingguan === 'function') {
-    loadIphMingguan();
-  }
-
-  if (typeof loadPerubahanMingguan === 'function') {
-    loadPerubahanMingguan();
-  }
+  loadIphMingguan();
+  loadPerubahanMingguan();
 };
+
 document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterTahun();
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
-
-
-
-
-
-
-
-
