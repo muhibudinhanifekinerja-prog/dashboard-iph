@@ -9,16 +9,6 @@ const headers = {
   Authorization: `Bearer ${SUPABASE_KEY}`
 };
 /*************************************************
- * KONFIGURASI SUPABASE
- *************************************************/
-const SUPABASE_URL = "https://hkllhgmfbnepgtfnrxuj.supabase.co";
-const SUPABASE_KEY = "ISI_API_KEY_ANDA";
-const headers = {
-  apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`
-};
-
-/*************************************************
  * HELPER
  *************************************************/
 function formatRupiah(val) {
@@ -242,3 +232,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
