@@ -153,16 +153,30 @@ async function loadIphMingguan() {
   const bulan = document.getElementById('filterBulan').value;
   const tahun = document.getElementById('filterTahun').value;
 
-  const url =
+  const komoditas = getCheckedValues('filterKomoditasList');
+  const pasar = getCheckedValues('filterPasarList');
+
+  let url =
     `${SUPABASE_URL}/rest/v1/v_iph_harian_bersih`
     + `?tahun=eq.${tahun}`
-    + `&bulan=eq.${bulan}`
-    + `&order=nama_komoditas.asc`
-    + `&order=tanggal.asc`;
+    + `&bulan=eq.${bulan}`;
+
+  // filter komoditas
+  if (komoditas.length > 0) {
+    url += `&id_komoditas=in.(${komoditas.join(',')})`;
+  }
+
+  // filter pasar
+  if (pasar.length > 0) {
+    url += `&id_pasar=in.(${pasar.join(',')})`;
+  }
+
+  url += `&order=nama_komoditas.asc&order=tanggal.asc`;
 
   const res = await fetch(url, { headers });
   renderIphMingguan(await res.json());
 }
+
 function renderIphMingguan(data) {
   const el = document.getElementById('iphMingguan');
   if (!data.length) {
@@ -170,32 +184,22 @@ function renderIphMingguan(data) {
     return;
   }
 
-  const cutoff = {}; // tanggal terakhir per minggu
   const bucket = {}; // { komoditas: { minggu: [harga] } }
   let maxM = 0;
 
-  // tentukan cutoff tanggal tiap minggu
   data.forEach(r => {
     const m = mingguKeLaporan(r.tanggal);
     maxM = Math.max(maxM, m);
-    if (!cutoff[m] || new Date(r.tanggal) > new Date(cutoff[m])) {
-      cutoff[m] = r.tanggal;
-    }
+
+    if (!bucket[r.nama_komoditas]) bucket[r.nama_komoditas] = {};
+    if (!bucket[r.nama_komoditas][m]) bucket[r.nama_komoditas][m] = [];
+
+    bucket[r.nama_komoditas][m].push(r.harga);
   });
 
-  // kumpulkan harga sampai cutoff minggu
-  data.forEach(r => {
-    const m = mingguKeLaporan(r.tanggal);
-    if (new Date(r.tanggal) <= new Date(cutoff[m])) {
-      if (!bucket[r.nama_komoditas]) bucket[r.nama_komoditas] = {};
-      if (!bucket[r.nama_komoditas][m]) bucket[r.nama_komoditas][m] = [];
-      bucket[r.nama_komoditas][m].push(r.harga);
-    }
-  });
-
-  // render tabel
   let html = `<table class="table table-bordered table-sm table-dashboard">
     <thead><tr><th>Komoditas</th>`;
+
   for (let i = 1; i <= maxM; i++) html += `<th>M${i}</th>`;
   html += `</tr></thead><tbody>`;
 
@@ -272,5 +276,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
