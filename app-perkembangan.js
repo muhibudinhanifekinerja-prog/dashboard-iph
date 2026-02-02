@@ -167,20 +167,38 @@ async function loadIphMingguan() {
 
 function renderIphMingguan(data) {
   const el = document.getElementById('iphMingguan');
-  if (!data.length) return el.innerHTML = '<em>Tidak ada data</em>';
+  if (!data.length) {
+    el.innerHTML = '<em>Tidak ada data</em>';
+    return;
+  }
 
   const hasil = {};
+  const lastDate = {};
   let maxM = 0;
 
   data.forEach(r => {
     const m = mingguKeLaporan(r.tanggal);
     maxM = Math.max(maxM, m);
-    if (!hasil[r.nama_komoditas]) hasil[r.nama_komoditas] = {};
-    hasil[r.nama_komoditas][m] = Math.round(r.avg_kumulatif);
+
+    const key = r.nama_komoditas;
+    if (!hasil[key]) {
+      hasil[key] = {};
+      lastDate[key] = {};
+    }
+
+    // SIMPAN hanya jika tanggal lebih besar
+    if (
+      !lastDate[key][m] ||
+      new Date(r.tanggal) > new Date(lastDate[key][m])
+    ) {
+      lastDate[key][m] = r.tanggal;
+      hasil[key][m] = Math.round(r.avg_kumulatif);
+    }
   });
 
   let html = `<table class="table table-bordered table-sm table-dashboard">
-  <thead><tr><th>Komoditas</th>`;
+    <thead><tr><th>Komoditas</th>`;
+
   for (let i = 1; i <= maxM; i++) html += `<th>M${i}</th>`;
   html += `</tr></thead><tbody>`;
 
@@ -254,3 +272,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
