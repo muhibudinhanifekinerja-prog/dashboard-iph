@@ -225,7 +225,7 @@ async function loadIphMingguan() {
   renderIphMingguan(data);
   renderLogMingguan(data);
   renderLogTableMingguan(data);
-
+  renderLogTableMingguanKumulatif(data);
 }
 
 
@@ -366,6 +366,92 @@ function renderLogTableMingguan(data) {
     el.innerHTML = '<em>Tidak ada data</em>';
     return;
   }
+ function renderLogTableMingguanKumulatif(data) {
+  const el = document.getElementById('logTableMingguanKumulatif');
+  if (!el) return;
+
+  if (!data.length) {
+    el.innerHTML = '<em>Tidak ada data</em>';
+    return;
+  }
+
+  /* =========================================
+   * 1. Struktur dasar
+   * ========================================= */
+  const komoditasList = [...new Set(data.map(d => d.nama_komoditas))].sort();
+  const tanggalList = [...new Set(data.map(d => d.tanggal))].sort();
+
+  // hargaPerTanggal[tanggal][komoditas] = [harga...]
+  const hargaPerTanggal = {};
+  tanggalList.forEach(t => hargaPerTanggal[t] = {});
+
+  data.forEach(d => {
+    if (!hargaPerTanggal[d.tanggal][d.nama_komoditas]) {
+      hargaPerTanggal[d.tanggal][d.nama_komoditas] = [];
+    }
+    hargaPerTanggal[d.tanggal][d.nama_komoditas].push(d.harga);
+  });
+
+  /* =========================================
+   * 2. Kelompokkan tanggal per minggu
+   * ========================================= */
+  const tanggalPerMinggu = {};
+  tanggalList.forEach(tgl => {
+    const m = mingguKeLaporan(tgl);
+    if (!tanggalPerMinggu[m]) tanggalPerMinggu[m] = [];
+    tanggalPerMinggu[m].push(tgl);
+  });
+
+  const mingguList = Object.keys(tanggalPerMinggu)
+    .map(Number)
+    .sort((a, b) => a - b);
+
+  /* =========================================
+   * 3. Hitung kumulatif
+   * ========================================= */
+  // kumulatif[M][komoditas] = [harga harian]
+  const kumulatif = {};
+
+  mingguList.forEach(m => {
+    kumulatif[m] = {};
+    komoditasList.forEach(k => kumulatif[m][k] = []);
+
+    // ambil semua tanggal dari M1 sampai Mm
+    mingguList
+      .filter(x => x <= m)
+      .forEach(x => {
+        tanggalPerMinggu[x].forEach(tgl => {
+          komoditasList.forEach(k => {
+            const arr = hargaPerTanggal[tgl][k] || [];
+            arr.forEach(h => kumulatif[m][k].push(h));
+          });
+        });
+      });
+  });
+
+  /* =========================================
+   * 4. Render tabel
+   * ========================================= */
+  let html = '<thead><tr><th>Minggu</th>';
+  komoditasList.forEach(k => html += `<th>${k}</th>`);
+  html += '</tr></thead><tbody>';
+
+  mingguList.forEach(m => {
+    html += `<tr><td>M${m}</td>`;
+    komoditasList.forEach(k => {
+      const arr = kumulatif[m][k];
+      const avg = arr.length
+        ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length)
+        : null;
+
+      html += `<td class="text-end">${avg ? formatRupiah(avg) : '-'}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody>';
+  el.innerHTML = html;
+}
 
   /* =========================================
    * 1. Siapkan struktur dasar
@@ -458,6 +544,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
