@@ -55,8 +55,21 @@ function mingguKeLaporan(tanggalStr) {
 }
 
 /************************************************************
- * LOAD FILTER MASTER
+ * LOAD FILTER MASTER (TAHUN, KOMODITAS, PASAR)
  ************************************************************/
+async function loadFilterTahun() {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/v_tahun_data?select=tahun&order=tahun.desc`,
+    { headers }
+  );
+  const data = await res.json();
+  const el = document.getElementById("filterTahun");
+  el.innerHTML = "";
+  data.forEach(d => {
+    el.innerHTML += `<option value="${d.tahun}">${d.tahun}</option>`;
+  });
+}
+
 async function loadFilterKomoditas() {
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/komoditas?select=id_komoditas,nama_komoditas&order=nama_komoditas.asc`,
@@ -96,21 +109,22 @@ async function loadFilterPasar() {
 }
 
 /************************************************************
- * HARGA HARIAN (TABEL ATAS)
+ * TABEL HARGA HARIAN (TERFILTER TAHUN + KOMODITAS)
  ************************************************************/
 async function loadHargaHarian() {
-  const bulan = document.getElementById("filterBulan").value;
   const tahun = document.getElementById("filterTahun").value;
+  const bulan = document.getElementById("filterBulan").value;
   const komoditas = getCheckedValues("filterKomoditasList");
   const pasar = getCheckedValues("filterPasarList");
 
   let url =
     `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap`
-    + `?tahun=eq.${tahun}&bulan=eq.${bulan}`
-    + `&order=nama_komoditas.asc&order=nama_pasar.asc&order=tanggal.asc`;
+    + `?tahun=eq.${tahun}&bulan=eq.${bulan}`;
 
   if (komoditas.length) url += `&id_komoditas=in.(${komoditas.join(",")})`;
   if (pasar.length) url += `&id_pasar=in.(${pasar.join(",")})`;
+
+  url += `&order=nama_komoditas.asc&order=nama_pasar.asc&order=tanggal.asc`;
 
   const res = await fetch(url, { headers });
   renderHargaHarian(await res.json());
@@ -127,8 +141,12 @@ function renderHargaHarian(data) {
   const grup = {};
 
   data.forEach(d => {
-    const key = `${d.nama_komoditas}||${d.nama_pasar}`;
-    grup[key] ??= { komoditas: d.nama_komoditas, pasar: d.nama_pasar, harga: {} };
+    const key = `${d.id_komoditas}||${d.id_pasar}`;
+    grup[key] ??= {
+      komoditas: d.nama_komoditas,
+      pasar: d.nama_pasar,
+      harga: {}
+    };
     grup[key].harga[d.tanggal] = d.harga;
   });
 
@@ -144,9 +162,9 @@ function renderHargaHarian(data) {
       <td>${no++}</td>
       <td>${r.komoditas}</td>
       <td>${r.pasar}</td>`;
-    tanggalList.forEach(t =>
-      html += `<td class="text-end">${r.harga[t] ? formatRupiah(r.harga[t]) : "-"}</td>`
-    );
+    tanggalList.forEach(t => {
+      html += `<td class="text-end">${r.harga[t] ? formatRupiah(r.harga[t]) : "-"}</td>`;
+    });
     html += `</tr>`;
   });
 
@@ -154,11 +172,11 @@ function renderHargaHarian(data) {
 }
 
 /************************************************************
- * IPH MINGGUAN (PRODUKSI + DEBUG)
+ * IPH MINGGUAN + DEBUG
  ************************************************************/
 async function loadIphMingguan() {
-  const bulan = document.getElementById("filterBulan").value;
   const tahun = document.getElementById("filterTahun").value;
+  const bulan = document.getElementById("filterBulan").value;
   const komoditas = getCheckedValues("filterKomoditasList");
   const pasar = getCheckedValues("filterPasarList");
 
@@ -211,9 +229,7 @@ function renderIphMingguan(data) {
     html += `<tr><td>${k}</td>`;
     for (let i = 1; i <= maxM; i++) {
       const arr = bucket[k][i] || [];
-      const avg = arr.length
-        ? arr.reduce((a,b)=>a+b,0) / arr.length
-        : null;
+      const avg = arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
       html += `<td class="text-end">${avg ? formatRupiah(avg) : "-"}</td>`;
     }
     html += `</tr>`;
@@ -223,11 +239,11 @@ function renderIphMingguan(data) {
 }
 
 /************************************************************
- * DEBUG LOG & TABEL
+ * DEBUG LOG & TABEL (TIDAK DIUBAH)
  ************************************************************/
-function renderLogMingguan(data) { /* sama seperti sebelumnya */ }
-function renderLogTableMingguan(data) { /* sama seperti sebelumnya */ }
-function renderLogTableMingguanKumulatif(data) { /* sama seperti sebelumnya */ }
+function renderLogMingguan(data) { /* versi debug sebelumnya */ }
+function renderLogTableMingguan(data) { /* versi debug sebelumnya */ }
+function renderLogTableMingguanKumulatif(data) { /* versi debug sebelumnya */ }
 
 /************************************************************
  * EVENT
@@ -238,6 +254,7 @@ document.getElementById("btnTampil").onclick = () => {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+  loadFilterTahun();
   loadFilterKomoditas();
   loadFilterPasar();
 });
