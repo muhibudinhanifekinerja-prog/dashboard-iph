@@ -66,6 +66,41 @@ function hitungMingguanKumulatif(data) {
 
   return { mingguList, komoditasList, hasil };
 }
+function hitungPerubahanMingguanVsBulanLalu(
+  kumulatifBulanIni,
+  kumulatifBulanLalu
+) {
+  const { mingguList, komoditasList, hasil } = kumulatifBulanIni;
+
+  // ambil minggu TERAKHIR bulan lalu (M4 / M5)
+  const mingguAkhirBulanLalu = Math.max(
+    ...kumulatifBulanLalu.mingguList
+  );
+
+  const baseline = {};
+  komoditasList.forEach(k => {
+    baseline[k] = kumulatifBulanLalu.hasil[mingguAkhirBulanLalu][k] ?? null;
+  });
+
+  const perubahan = {};
+
+  mingguList.forEach(m => {
+    perubahan[m] = {};
+    komoditasList.forEach(k => {
+      const base = baseline[k];
+      const curr = hasil[m][k];
+
+      if (base === null || base === 0 || curr === null) {
+        perubahan[m][k] = null;
+      } else {
+        perubahan[m][k] = ((curr - base) / base) * 100;
+      }
+    });
+  });
+
+  return { mingguList, komoditasList, perubahan };
+}
+
 /************************************************************
  * LOGIKA MINGGU (ATURAN LEMBAGA)
  ************************************************************/
@@ -280,7 +315,24 @@ async function loadIphMingguan() {
 
   const res = await fetch(url, { headers });
   const data = await res.json();
-
+  // data harian bulan ini & bulan lalu
+  const dataHarianBulanIni = dataBulanIni;
+  const dataHarianBulanLalu = dataBulanLalu;
+  
+  // kumulatif
+  const kumulatifBulanIni =
+    hitungMingguanKumulatif(dataHarianBulanIni);
+  
+  const kumulatifBulanLalu =
+    hitungMingguanKumulatif(dataHarianBulanLalu);
+  
+  // % perubahan
+  const dataPerubahan =
+    hitungPerubahanMingguanVsBulanLalu(
+      kumulatifBulanIni,
+      kumulatifBulanLalu
+    );
+  renderPerubahanMingguan(dataPerubahan);
   renderIphMingguan(data);
   renderLogMingguan(data);
   renderLogTableMingguan(data);
@@ -434,6 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
