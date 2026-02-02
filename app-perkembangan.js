@@ -273,6 +273,34 @@ function renderPerubahanMingguan(data) {
 
   el.innerHTML = html + "</tbody></table>";
 }
+/************************************************************
+ * FETCH HARGA HARIAN (UNTUK IPH & PERUBAHAN)
+ ************************************************************/
+async function fetchHargaHarian(tahun, bulan, komoditas, pasar) {
+  const start = `${tahun}-${String(bulan).padStart(2, "0")}-01`;
+  const end = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
+
+  let url =
+    `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap` +
+    `?tanggal=gte.${start}&tanggal=lte.${end}`;
+
+  if (komoditas.length)
+    url += `&id_komoditas=in.(${komoditas.join(",")})`;
+
+  if (pasar.length)
+    url += `&id_pasar=in.(${pasar.join(",")})`;
+
+  url += `&order=nama_komoditas.asc&order=nama_pasar.asc&order=tanggal.asc`;
+
+  const res = await fetch(url, { headers });
+
+  if (!res.ok) {
+    console.error("Gagal fetchHargaHarian:", await res.text());
+    return [];
+  }
+
+  return await res.json();
+}
 
 /************************************************************
  * MAIN
@@ -311,3 +339,4 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
