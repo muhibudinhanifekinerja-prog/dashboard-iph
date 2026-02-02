@@ -306,15 +306,20 @@ function renderLogMingguan(data) {
     return;
   }
 
+  // 1️⃣ Ambil tanggal UNIK saja
+  const tanggalUnik = [
+    ...new Set(data.map(d => d.tanggal))
+  ].sort(); // urut ASC
+
   let log = '';
   let lastMinggu = null;
 
-  data.forEach(r => {
-    const minggu = mingguKeLaporan(r.tanggal);
+  tanggalUnik.forEach((tgl, idx) => {
+    const minggu = mingguKeLaporan(tgl);
+    const d = new Date(tgl);
 
-    // header bulan (sekali saja)
-    if (!log) {
-      const d = new Date(r.tanggal);
+    // header bulan (sekali)
+    if (idx === 0) {
       const bulanNama = d.toLocaleString('id-ID', { month: 'long' });
       log += `${bulanNama} ${d.getFullYear()}\n`;
       log += '----------------------------------------\n\n';
@@ -325,17 +330,16 @@ function renderLogMingguan(data) {
       log += '----------------------------------------\n\n';
     }
 
-    const hari = namaHari(r.tanggal);
-    const tgl = new Date(r.tanggal).getDate();
+    const hari = namaHari(tgl);
+    const tanggal = d.getDate();
 
-    log += `${hari.padEnd(7)} ${tgl.toString().padEnd(2)} | M${minggu}\n`;
+    log += `${hari.padEnd(7)} ${tanggal.toString().padEnd(2)} | M${minggu}\n`;
 
     lastMinggu = minggu;
   });
 
   el.textContent = log;
 }
-
 /*************************************************
  * INIT
  *************************************************/
@@ -350,6 +354,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
