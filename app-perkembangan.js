@@ -117,18 +117,36 @@ async function loadHargaHarian() {
   const komoditas = getCheckedValues("filterKomoditasList");
   const pasar = getCheckedValues("filterPasarList");
 
+  // range tanggal BULAN AKTIF
+  const start = `${tahun}-${bulan.padStart(2, "0")}-01`;
+  const end = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
+
   let url =
     `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap`
-    + `?tahun=eq.${tahun}&bulan=eq.${bulan}`;
+    + `?tanggal=gte.${start}`
+    + `&tanggal=lte.${end}`;
 
-  if (komoditas.length) url += `&id_komoditas=in.(${komoditas.join(",")})`;
-  if (pasar.length) url += `&id_pasar=in.(${pasar.join(",")})`;
+  if (komoditas.length)
+    url += `&id_komoditas=in.(${komoditas.join(",")})`;
 
-  url += `&order=nama_komoditas.asc&order=nama_pasar.asc&order=tanggal.asc`;
+  if (pasar.length)
+    url += `&id_pasar=in.(${pasar.join(",")})`;
+
+  url += `&order=nama_komoditas.asc`
+       + `&order=nama_pasar.asc`
+       + `&order=tanggal.asc`;
 
   const res = await fetch(url, { headers });
-  renderHargaHarian(await res.json());
+
+  if (!res.ok) {
+    console.error("Gagal load harga harian:", await res.text());
+    return;
+  }
+
+  const data = await res.json();
+  renderHargaHarian(data);
 }
+
 
 function renderHargaHarian(data) {
   const el = document.getElementById("hargaHarian");
@@ -258,3 +276,4 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
