@@ -259,7 +259,41 @@ function renderIphMingguan(data) {
 /************************************************************
  * DEBUG LOG & TABEL (TIDAK DIUBAH)
  ************************************************************/
-function renderLogMingguan(data) { /* versi debug sebelumnya */ }
+function renderLogMingguan(data) {
+  const el = document.getElementById("logMingguan");
+  if (!el || !data || data.length === 0) {
+    el.innerHTML = "<em>Tidak ada data debug mingguan</em>";
+    return;
+  }
+
+  // tanggal unik & urut
+  const tanggalList = [...new Set(data.map(d => d.tanggal))].sort();
+
+  let log = "";
+  let lastMinggu = null;
+
+  tanggalList.forEach((tgl, idx) => {
+    const minggu = mingguKeLaporan(tgl);
+    const d = new Date(tgl);
+
+    // header bulan (sekali di awal)
+    if (idx === 0) {
+      log += `${d.toLocaleString("id-ID", { month: "long" })} ${d.getFullYear()}\n`;
+      log += "----------------------------------------\n\n";
+    }
+
+    // garis pemisah antar minggu
+    if (lastMinggu !== null && minggu !== lastMinggu) {
+      log += "----------------------------------------\n\n";
+    }
+
+    log += `${namaHari(tgl).padEnd(7)} ${d.getDate()} | M${minggu}\n`;
+    lastMinggu = minggu;
+  });
+
+  el.textContent = log;
+}
+
 function renderLogTableMingguan(data) {
   const el = document.getElementById("logTableMingguan");
   if (!el || !data || data.length === 0) {
@@ -339,5 +373,6 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
