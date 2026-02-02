@@ -100,6 +100,12 @@ function hitungPerubahanMingguanVsBulanLalu(
 
   return { mingguList, komoditasList, perubahan };
 }
+function getBulanLalu(bulan, tahun) {
+  if (bulan === 1) {
+    return { bulanLalu: 12, tahunLalu: tahun - 1 };
+  }
+  return { bulanLalu: bulan - 1, tahunLalu: tahun };
+}
 
 /************************************************************
  * LOGIKA MINGGU (ATURAN LEMBAGA)
@@ -295,6 +301,21 @@ function renderLogTableMingguan(data) {
   html += `</tbody></table>`;
   container.innerHTML = html;
 }
+async function fetchHargaHarian(tahun, bulan, komoditas, pasar) {
+  const start = `${tahun}-${String(bulan).padStart(2,"0")}-01`;
+  const end = new Date(tahun, bulan, 0).toISOString().slice(0,10);
+
+  let url = `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap`
+    + `?tanggal=gte.${start}&tanggal=lte.${end}`;
+
+  if (komoditas.length)
+    url += `&id_komoditas=in.(${komoditas.join(",")})`;
+  if (pasar.length)
+    url += `&id_pasar=in.(${pasar.join(",")})`;
+
+  const res = await fetch(url, { headers });
+  return await res.json();
+}
 
 /************************************************************
  * IPH MINGGUAN + DEBUG
@@ -315,14 +336,20 @@ async function loadIphMingguan() {
 
   const res = await fetch(url, { headers });
   const data = await res.json();
-  // data harian bulan ini & bulan lalu
-  const dataHarianBulanIni = dataBulanIni;
-  const dataHarianBulanLalu = dataBulanLalu;
-  
-  // kumulatif
-  const kumulatifBulanIni =
-    hitungMingguanKumulatif(dataHarianBulanIni);
-  
+ // dataHarian = hasil fetch bulan aktif (SUDAH ADA)
+  const kumulatifBulanIni = hitungMingguanKumulatif(dataHarian);
+  // ambil bulan lalu
+  const { bulanLalu, tahunLalu } = getBulanLalu(
+    filterBulan,
+    filterTahun
+  );
+// fetch data harian bulan lalu
+  const dataHarianBulanLalu = await fetchHargaHarian(
+    tahunLalu,
+    bulanLalu,
+    selectedKomoditas,
+    selectedPasar
+  );
   const kumulatifBulanLalu =
     hitungMingguanKumulatif(dataHarianBulanLalu);
   
@@ -332,6 +359,9 @@ async function loadIphMingguan() {
       kumulatifBulanIni,
       kumulatifBulanLalu
     );
+
+renderPerubahanMingguan(dataPerubahan);
+
   renderPerubahanMingguan(dataPerubahan);
   renderIphMingguan(data);
   renderLogMingguan(data);
@@ -486,6 +516,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
