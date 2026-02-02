@@ -146,16 +146,15 @@ function mingguKeLaporan(tanggalStr) {
   const diffDays = Math.floor((d - nextMonday) / (1000 * 60 * 60 * 24));
   return Math.min(2 + Math.floor(diffDays / 7), 5);
 }
-
 /*************************************************
  * IPH MINGGUAN (SQL + JS)
  *************************************************/
 async function loadIphMingguan() {
   const bulan = document.getElementById('filterBulan').value;
-  const tahun = getSelectedTahun();
+  const tahun = document.getElementById('filterTahun').value;
 
   const url =
-    `${SUPABASE_URL}/rest/v1/v_iph_harian_kumulatif`
+    `${SUPABASE_URL}/rest/v1/v_iph_harian_bersih`
     + `?tahun=eq.${tahun}`
     + `&bulan=eq.${bulan}`
     + `&order=nama_komoditas.asc`
@@ -164,7 +163,6 @@ async function loadIphMingguan() {
   const res = await fetch(url, { headers });
   renderIphMingguan(await res.json());
 }
-
 function renderIphMingguan(data) {
   const el = document.getElementById('iphMingguan');
   if (!data.length) {
@@ -172,47 +170,49 @@ function renderIphMingguan(data) {
     return;
   }
 
-  const hasil = {};
-  const lastDate = {};
+  const cutoff = {}; // tanggal terakhir per minggu
+  const bucket = {}; // { komoditas: { minggu: [harga] } }
   let maxM = 0;
 
+  // tentukan cutoff tanggal tiap minggu
   data.forEach(r => {
     const m = mingguKeLaporan(r.tanggal);
     maxM = Math.max(maxM, m);
-
-    const key = r.nama_komoditas;
-    if (!hasil[key]) {
-      hasil[key] = {};
-      lastDate[key] = {};
-    }
-
-    // SIMPAN hanya jika tanggal lebih besar
-    if (
-      !lastDate[key][m] ||
-      new Date(r.tanggal) > new Date(lastDate[key][m])
-    ) {
-      lastDate[key][m] = r.tanggal;
-      hasil[key][m] = Math.round(r.avg_kumulatif);
+    if (!cutoff[m] || new Date(r.tanggal) > new Date(cutoff[m])) {
+      cutoff[m] = r.tanggal;
     }
   });
 
+  // kumpulkan harga sampai cutoff minggu
+  data.forEach(r => {
+    const m = mingguKeLaporan(r.tanggal);
+    if (new Date(r.tanggal) <= new Date(cutoff[m])) {
+      if (!bucket[r.nama_komoditas]) bucket[r.nama_komoditas] = {};
+      if (!bucket[r.nama_komoditas][m]) bucket[r.nama_komoditas][m] = [];
+      bucket[r.nama_komoditas][m].push(r.harga);
+    }
+  });
+
+  // render tabel
   let html = `<table class="table table-bordered table-sm table-dashboard">
     <thead><tr><th>Komoditas</th>`;
-
   for (let i = 1; i <= maxM; i++) html += `<th>M${i}</th>`;
   html += `</tr></thead><tbody>`;
 
-  Object.keys(hasil).forEach(k => {
+  Object.keys(bucket).forEach(k => {
     html += `<tr><td>${k}</td>`;
     for (let i = 1; i <= maxM; i++) {
-      html += `<td class="text-end">${hasil[k][i] ? formatRupiah(hasil[k][i]) : '-'}</td>`;
+      const arr = bucket[k][i] || [];
+      const avg = arr.length
+        ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length)
+        : null;
+      html += `<td class="text-end">${avg ? formatRupiah(avg) : '-'}</td>`;
     }
     html += `</tr>`;
   });
 
   el.innerHTML = html + `</tbody></table>`;
 }
-
 /*************************************************
  * PERUBAHAN MINGGUAN (%)
  * (tetap, tidak diubah)
@@ -272,4 +272,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
