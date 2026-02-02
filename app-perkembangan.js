@@ -23,6 +23,12 @@ function getCheckedValues(containerId) {
     document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`)
   ).map(cb => cb.value);
 }
+function namaHari(dateStr) {
+  const d = new Date(dateStr);
+  const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  return hari[d.getDay()];
+}
+
 
 /*************************************************
  * FILTER
@@ -201,6 +207,7 @@ async function loadIphMingguan() {
   console.log('SAMPEL 10 BARIS DATA:', data.slice(0, 10));
 
   renderIphMingguan(data);
+  renderLogMingguan(data);
 }
 
 
@@ -290,6 +297,44 @@ function renderPerubahanMingguan(data) {
 
   el.innerHTML = html + `</tbody></table>`;
 }
+function renderLogMingguan(data) {
+  const el = document.getElementById('logMingguan');
+  if (!el) return;
+
+  if (!data.length) {
+    el.textContent = 'Tidak ada data';
+    return;
+  }
+
+  let log = '';
+  let lastMinggu = null;
+
+  data.forEach(r => {
+    const minggu = mingguKeLaporan(r.tanggal);
+
+    // header bulan (sekali saja)
+    if (!log) {
+      const d = new Date(r.tanggal);
+      const bulanNama = d.toLocaleString('id-ID', { month: 'long' });
+      log += `${bulanNama} ${d.getFullYear()}\n`;
+      log += '----------------------------------------\n\n';
+    }
+
+    // garis pemisah antar minggu
+    if (lastMinggu !== null && minggu !== lastMinggu) {
+      log += '----------------------------------------\n\n';
+    }
+
+    const hari = namaHari(r.tanggal);
+    const tgl = new Date(r.tanggal).getDate();
+
+    log += `${hari.padEnd(7)} ${tgl.toString().padEnd(2)} | M${minggu}\n`;
+
+    lastMinggu = minggu;
+  });
+
+  el.textContent = log;
+}
 
 /*************************************************
  * INIT
@@ -305,6 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
