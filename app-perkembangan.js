@@ -476,6 +476,129 @@ function renderLogTableMingguanKumulatif(data) {
   html += `</tbody></table>`;
   container.innerHTML = html;
 }
+/*****************************************************************
+ * ===============================================================
+ * % PERUBAHAN MINGGUAN
+ * ===============================================================
+ * Rumus:
+ * (Nilai kumulatif minggu ke-m bulan ini
+ *  − Nilai kumulatif akhir bulan lalu (M4/M5))
+ * ÷ Nilai kumulatif akhir bulan lalu × 100
+ *
+ * CATATAN:
+ * - Basis = data kumulatif (bukan rata-rata mingguan biasa)
+ * - Tidak fetch data
+ * - Tidak hitung ulang data harian
+ *****************************************************************/
+
+
+/**
+ * HITUNG % PERUBAHAN MINGGUAN
+ */
+function hitungPerubahanMingguanVsBulanLalu(
+  kumulatifBulanIni,
+  kumulatifBulanLalu
+) {
+  if (!kumulatifBulanIni || !kumulatifBulanLalu) {
+    console.warn("Data kumulatif tidak lengkap");
+    return null;
+  }
+
+  const { mingguList, komoditasList, hasil } = kumulatifBulanIni;
+
+  // Minggu terakhir bulan lalu (M4 / M5)
+  const mingguAkhirBulanLalu =
+    Math.max(...kumulatifBulanLalu.mingguList);
+
+  const baseline =
+    kumulatifBulanLalu.hasil?.[mingguAkhirBulanLalu] || {};
+
+  const perubahan = {};
+
+  mingguList.forEach(m => {
+    perubahan[m] = {};
+    komoditasList.forEach(k => {
+      const nilaiBulanLalu = baseline[k] ?? null;
+      const nilaiBulanIni = hasil[m]?.[k] ?? null;
+
+      if (
+        nilaiBulanLalu === null ||
+        nilaiBulanLalu === 0 ||
+        nilaiBulanIni === null
+      ) {
+        perubahan[m][k] = null;
+      } else {
+        perubahan[m][k] =
+          ((nilaiBulanIni - nilaiBulanLalu) / nilaiBulanLalu) * 100;
+      }
+    });
+  });
+
+  return {
+    mingguList,
+    komoditasList,
+    perubahan
+  };
+}
+
+
+/**
+ * RENDER TABEL % PERUBAHAN MINGGUAN
+ * targetElementId = id container HTML (div)
+ */
+function renderPerubahanMingguan(
+  dataPerubahan,
+  targetElementId = "perubahanPersen"
+) {
+  if (!dataPerubahan) return;
+
+  const { mingguList, komoditasList, perubahan } = dataPerubahan;
+  const el = document.getElementById(targetElementId);
+
+  if (!el) {
+    console.warn("Elemen render % perubahan tidak ditemukan:", targetElementId);
+    return;
+  }
+
+  let html = `<table class="table table-bordered table-sm">
+    <thead>
+      <tr>
+        <th>Komoditas</th>`;
+
+  mingguList.forEach(m => {
+    html += `<th>M${m}</th>`;
+  });
+
+  html += `</tr>
+    </thead>
+    <tbody>`;
+
+  komoditasList.forEach(k => {
+    html += `<tr>
+      <td>${k}</td>`;
+
+    mingguList.forEach(m => {
+      const v = perubahan[m]?.[k];
+
+      let cls = "stabil";
+      let txt = "-";
+
+      if (v !== null) {
+        txt = v.toFixed(2) + "%";
+        if (v > 0) cls = "naik";
+        else if (v < 0) cls = "turun";
+      }
+
+      html += `<td class="text-end ${cls}">${txt}</td>`;
+    });
+
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table>`;
+  el.innerHTML = html;
+}
+
 
 /************************************************************
  * EVENT
@@ -490,6 +613,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
