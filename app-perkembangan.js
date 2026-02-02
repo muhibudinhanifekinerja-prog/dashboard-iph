@@ -260,8 +260,71 @@ function renderIphMingguan(data) {
  * DEBUG LOG & TABEL (TIDAK DIUBAH)
  ************************************************************/
 function renderLogMingguan(data) { /* versi debug sebelumnya */ }
-function renderLogTableMingguan(data) { /* versi debug sebelumnya */ }
-function renderLogTableMingguanKumulatif(data) { /* versi debug sebelumnya */ }
+function renderLogTableMingguan(data) {
+  const el = document.getElementById("logTableMingguan");
+  if (!el || !data || data.length === 0) {
+    el.innerHTML = "<em>Tidak ada data debug</em>";
+    return;
+  }
+
+  const tanggalList = [...new Set(data.map(d => d.tanggal))].sort();
+  const komoditasList = [...new Set(data.map(d => d.nama_komoditas))].sort();
+
+  let html = "<table class='table table-bordered table-sm'>";
+  html += "<thead><tr><th>Tanggal</th>";
+
+  komoditasList.forEach(k => html += `<th>${k}</th>`);
+  html += "</tr></thead><tbody>";
+
+  tanggalList.forEach(t => {
+    html += `<tr><td>${t}</td>`;
+    komoditasList.forEach(k => {
+      const row = data.find(d => d.tanggal === t && d.nama_komoditas === k);
+      html += `<td class="text-end">${row ? formatRupiah(row.harga) : "-"}</td>`;
+    });
+    html += "</tr>";
+  });
+
+  html += "</tbody></table>";
+  el.innerHTML = html;
+}
+function renderLogTableMingguanKumulatif(data) {
+  const el = document.getElementById("logTableMingguanKumulatif");
+  if (!el || !data || data.length === 0) {
+    el.innerHTML = "<em>Tidak ada data debug kumulatif</em>";
+    return;
+  }
+
+  const komoditasList = [...new Set(data.map(d => d.nama_komoditas))].sort();
+  const mingguMap = {};
+
+  data.forEach(d => {
+    const m = mingguKeLaporan(d.tanggal);
+    mingguMap[m] ??= {};
+    mingguMap[m][d.nama_komoditas] ??= [];
+    mingguMap[m][d.nama_komoditas].push(d.harga);
+  });
+
+  let html = "<table class='table table-bordered table-sm'>";
+  html += "<thead><tr><th>Minggu</th>";
+
+  komoditasList.forEach(k => html += `<th>${k}</th>`);
+  html += "</tr></thead><tbody>";
+
+  Object.keys(mingguMap).sort().forEach(m => {
+    html += `<tr><td>M${m}</td>`;
+    komoditasList.forEach(k => {
+      const arr = mingguMap[m][k] || [];
+      const avg = arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+      html += `<td class="text-end">${avg ? formatRupiah(avg) : "-"}</td>`;
+    });
+    html += "</tr>";
+  });
+
+  html += "</tbody></table>";
+  el.innerHTML = html;
+}
+
 
 /************************************************************
  * EVENT
@@ -276,4 +339,5 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
