@@ -28,6 +28,44 @@ function getCheckedValues(containerId) {
     document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`)
   ).map(el => el.value);
 }
+function hitungMingguanKumulatif(data) {
+  const mingguMap = {};
+  const komoditasSet = new Set();
+
+  data.forEach(d => {
+    const m = mingguKeLaporan(d.tanggal);
+    mingguMap[m] ??= {};
+    mingguMap[m][d.nama_komoditas] ??= [];
+    mingguMap[m][d.nama_komoditas].push(d.harga);
+    komoditasSet.add(d.nama_komoditas);
+  });
+
+  const mingguList = Object.keys(mingguMap)
+    .map(Number)
+    .sort((a, b) => a - b);
+
+  const komoditasList = Array.from(komoditasSet).sort();
+
+  const kumulatifData = {};
+  komoditasList.forEach(k => kumulatifData[k] = []);
+
+  const hasil = {};
+
+  mingguList.forEach(m => {
+    hasil[m] = {};
+    komoditasList.forEach(k => {
+      if (mingguMap[m][k]) {
+        kumulatifData[k].push(...mingguMap[m][k]);
+      }
+      const arr = kumulatifData[k];
+      hasil[m][k] = arr.length
+        ? arr.reduce((a,b)=>a+b,0) / arr.length
+        : null;
+    });
+  });
+
+  return { mingguList, komoditasList, hasil };
+}
 
 /************************************************************
  * LOGIKA MINGGU (ATURAN LEMBAGA)
@@ -255,36 +293,28 @@ async function loadIphMingguan() {
  ************************************************************/
 function renderIphMingguan(data) {
   const el = document.getElementById("iphMingguan");
-  if (!data.length) {
+  if (!data || data.length === 0) {
     el.innerHTML = "<em>Tidak ada data</em>";
     return;
   }
 
-  const bucket = {};
-  let maxM = 0;
-
-  data.forEach(d => {
-    const m = mingguKeLaporan(d.tanggal);
-    maxM = Math.max(maxM, m);
-
-    bucket[d.nama_komoditas] ??= {};
-    bucket[d.nama_komoditas][m] ??= [];
-    bucket[d.nama_komoditas][m].push(d.harga);
-  });
+  // 🔑 PAKAI RUMUS DEBUG KUMULATIF
+  const { mingguList, komoditasList, hasil } = hitungMingguanKumulatif(data);
 
   let html = `<table class="table table-bordered table-sm">
-    <thead><tr><th>Komoditas</th>`;
+    <thead>
+      <tr>
+        <th>Komoditas</th>`;
 
-  for (let i = 1; i <= maxM; i++) html += `<th>M${i}</th>`;
+  mingguList.forEach(m => html += `<th>M${m}</th>`);
   html += `</tr></thead><tbody>`;
 
-  Object.keys(bucket).forEach(k => {
+  komoditasList.forEach(k => {
     html += `<tr><td>${k}</td>`;
-    for (let i = 1; i <= maxM; i++) {
-      const arr = bucket[k][i] || [];
-      const avg = arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
-      html += `<td class="text-end">${avg ? formatRupiah(avg) : "-"}</td>`;
-    }
+    mingguList.forEach(m => {
+      const v = hasil[m][k];
+      html += `<td class="text-end">${v ? formatRupiah(v) : "-"}</td>`;
+    });
     html += `</tr>`;
   });
 
@@ -406,6 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
