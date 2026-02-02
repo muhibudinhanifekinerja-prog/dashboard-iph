@@ -188,6 +188,41 @@ function renderHargaHarian(data) {
 
   el.innerHTML = html + "</tbody></table>";
 }
+function renderLogTableMingguan(data) {
+  const container = document.getElementById("logTableMingguan");
+  if (!container || !data || data.length === 0) {
+    if (container) container.innerHTML = "<em>Tidak ada data debug</em>";
+    return;
+  }
+
+  const komoditasList = [...new Set(data.map(d => d.nama_komoditas))].sort();
+  const tanggalList = [...new Set(data.map(d => d.tanggal))].sort();
+
+  const hargaMap = {};
+  data.forEach(d => {
+    hargaMap[d.tanggal] ??= {};
+    hargaMap[d.tanggal][d.nama_komoditas] = d.harga;
+  });
+
+  let html = `<table class="table table-bordered table-sm">
+    <thead>
+      <tr>
+        <th>Tanggal</th>`;
+  komoditasList.forEach(k => html += `<th>${k}</th>`);
+  html += `</tr></thead><tbody>`;
+
+  tanggalList.forEach(tgl => {
+    html += `<tr><td>${tgl}</td>`;
+    komoditasList.forEach(k => {
+      const val = hargaMap[tgl]?.[k] ?? null;
+      html += `<td class="text-end">${val ? formatRupiah(val) : "-"}</td>`;
+    });
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table>`;
+  container.innerHTML = html;
+}
 
 /************************************************************
  * IPH MINGGUAN + DEBUG
@@ -371,6 +406,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
