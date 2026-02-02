@@ -3,11 +3,11 @@
  *************************************************/
 const SUPABASE_URL = "https://hkllhgmfbnepgtfnrxuj.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhrbGxoZ21mYm5lcGd0Zm5yeHVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxOTA1NzQsImV4cCI6MjA4Mjc2NjU3NH0.Ft8giYKJIPPiGstRJXJNb_uuKQUuNlaAM8p2dE2UKs0";
-const DEBUG_SUPABASE = true;
 const headers = {
   apikey: SUPABASE_KEY,
   Authorization: `Bearer ${SUPABASE_KEY}`
 };
+
 /*************************************************
  * HELPER
  *************************************************/
@@ -76,22 +76,17 @@ async function loadFilterPasar() {
 async function loadHargaHarian() {
   const bulan = document.getElementById('filterBulan').value;
   const tahun = getSelectedTahun();
-  const komoditasArr = getCheckedValues('filterKomoditasList');
-  const pasarArr = getCheckedValues('filterPasarList');
 
   const start = `${tahun}-${bulan.padStart(2, '0')}-01`;
   const end = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
 
-  let url =
+  const url =
     `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap`
     + `?tanggal=gte.${start}`
     + `&tanggal=lte.${end}`
     + `&order=nama_komoditas.asc`
     + `&order=nama_pasar.asc`
     + `&order=tanggal.asc`;
-
-  if (komoditasArr.length) url += `&id_komoditas=in.(${komoditasArr.join(',')})`;
-  if (pasarArr.length) url += `&id_pasar=in.(${pasarArr.join(',')})`;
 
   const res = await fetch(url, { headers });
   renderHargaHarian(await res.json());
@@ -128,34 +123,60 @@ function renderHargaHarian(data) {
 }
 
 /*************************************************
- * IPH MINGGUAN
+ * LOGIKA MINGGU (JS – FINAL)
+ *************************************************/
+function mingguKeLaporan(tanggalStr) {
+  const d = new Date(tanggalStr);
+  const y = d.getFullYear();
+  const m = d.getMonth();
+
+  const first = new Date(y, m, 1);
+  while (first.getDay() === 0 || first.getDay() === 6) {
+    first.setDate(first.getDate() + 1);
+  }
+
+  const friday = new Date(first);
+  friday.setDate(first.getDate() + (5 - friday.getDay()));
+
+  if (d <= friday) return 1;
+
+  const nextMonday = new Date(friday);
+  nextMonday.setDate(friday.getDate() + 3);
+
+  const diffDays = Math.floor((d - nextMonday) / (1000 * 60 * 60 * 24));
+  return Math.min(2 + Math.floor(diffDays / 7), 5);
+}
+
+/*************************************************
+ * IPH MINGGUAN (SQL + JS)
  *************************************************/
 async function loadIphMingguan() {
   const bulan = document.getElementById('filterBulan').value;
   const tahun = getSelectedTahun();
-  const komoditasArr = getCheckedValues('filterKomoditasList');
-  const pasarArr = getCheckedValues('filterPasarList');
 
-  let url =
-    `${SUPABASE_URL}/rest/v1/v_iph_mingguan`
-    + `?tahun=eq.${tahun}&bulan=eq.${bulan}`
-    + `&order=nama_komoditas.asc&order=minggu_ke.asc`;
+  const url =
+    `${SUPABASE_URL}/rest/v1/v_iph_harian_kumulatif`
+    + `?tahun=eq.${tahun}`
+    + `&bulan=eq.${bulan}`
+    + `&order=nama_komoditas.asc`
+    + `&order=tanggal.asc`;
 
-  if (komoditasArr.length) url += `&id_komoditas=in.(${komoditasArr.join(',')})`;
-  if (pasarArr.length) url += `&id_pasar=in.(${pasarArr.join(',')})`;
-
-  renderIphMingguan(await (await fetch(url, { headers })).json());
+  const res = await fetch(url, { headers });
+  renderIphMingguan(await res.json());
 }
 
 function renderIphMingguan(data) {
   const el = document.getElementById('iphMingguan');
   if (!data.length) return el.innerHTML = '<em>Tidak ada data</em>';
 
-  const maxM = Math.max(...data.map(d => d.minggu_ke));
-  const grup = {};
-  data.forEach(d => {
-    if (!grup[d.nama_komoditas]) grup[d.nama_komoditas] = {};
-    grup[d.nama_komoditas][d.minggu_ke] = d.harga_mingguan;
+  const hasil = {};
+  let maxM = 0;
+
+  data.forEach(r => {
+    const m = mingguKeLaporan(r.tanggal);
+    maxM = Math.max(maxM, m);
+    if (!hasil[r.nama_komoditas]) hasil[r.nama_komoditas] = {};
+    hasil[r.nama_komoditas][m] = Math.round(r.avg_kumulatif);
   });
 
   let html = `<table class="table table-bordered table-sm table-dashboard">
@@ -163,10 +184,10 @@ function renderIphMingguan(data) {
   for (let i = 1; i <= maxM; i++) html += `<th>M${i}</th>`;
   html += `</tr></thead><tbody>`;
 
-  Object.keys(grup).forEach(k => {
+  Object.keys(hasil).forEach(k => {
     html += `<tr><td>${k}</td>`;
     for (let i = 1; i <= maxM; i++) {
-      html += `<td class="text-end">${grup[k][i] ? formatRupiah(grup[k][i]) : '-'}</td>`;
+      html += `<td class="text-end">${hasil[k][i] ? formatRupiah(hasil[k][i]) : '-'}</td>`;
     }
     html += `</tr>`;
   });
@@ -176,6 +197,7 @@ function renderIphMingguan(data) {
 
 /*************************************************
  * PERUBAHAN MINGGUAN (%)
+ * (tetap, tidak diubah)
  *************************************************/
 async function loadPerubahanMingguan() {
   const bulan = document.getElementById('filterBulan').value;
@@ -232,4 +254,3 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
-
