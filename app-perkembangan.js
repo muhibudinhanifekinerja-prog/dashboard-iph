@@ -324,7 +324,14 @@ function renderLogTableMingguan(data) {
 }
 function renderLogTableMingguanKumulatif(data) {
   const el = document.getElementById("logTableMingguanKumulatif");
-  if (!el || !data || data.length === 0) {
+
+  // 🔒 JIKA ELEMEN BELUM ADA, JANGAN CRASH
+  if (!el) {
+    console.warn("Elemen #logTableMingguanKumulatif belum ada");
+    return;
+  }
+
+  if (!data || data.length === 0) {
     el.innerHTML = "<em>Tidak ada data debug kumulatif</em>";
     return;
   }
@@ -339,13 +346,11 @@ function renderLogTableMingguanKumulatif(data) {
     mingguMap[m][d.nama_komoditas].push(d.harga);
   });
 
-  let html = "<table class='table table-bordered table-sm'>";
-  html += "<thead><tr><th>Minggu</th>";
-
+  let html = "<thead><tr><th>Minggu</th>";
   komoditasList.forEach(k => html += `<th>${k}</th>`);
   html += "</tr></thead><tbody>";
 
-  Object.keys(mingguMap).sort().forEach(m => {
+  Object.keys(mingguMap).sort((a,b)=>a-b).forEach(m => {
     html += `<tr><td>M${m}</td>`;
     komoditasList.forEach(k => {
       const arr = mingguMap[m][k] || [];
@@ -355,11 +360,8 @@ function renderLogTableMingguanKumulatif(data) {
     html += "</tr>";
   });
 
-  html += "</tbody></table>";
   el.innerHTML = html;
 }
-
-
 /************************************************************
  * EVENT
  ************************************************************/
@@ -373,6 +375,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
