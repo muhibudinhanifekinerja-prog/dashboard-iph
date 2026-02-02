@@ -66,7 +66,6 @@ function hitungMingguanKumulatif(data) {
 
   return { mingguList, komoditasList, hasil };
 }
-
 /************************************************************
  * LOGIKA MINGGU (ATURAN LEMBAGA)
  ************************************************************/
@@ -320,7 +319,6 @@ function renderIphMingguan(data) {
 
   el.innerHTML = html + "</tbody></table>";
 }
-
 /************************************************************
  * DEBUG LOG & TABEL (TIDAK DIUBAH)
  ************************************************************/
@@ -436,6 +434,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
