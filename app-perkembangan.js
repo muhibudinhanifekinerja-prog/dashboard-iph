@@ -138,14 +138,28 @@ function mingguKeLaporan(tanggalStr) {
   const friday = new Date(first);
   friday.setDate(first.getDate() + (5 - friday.getDay()));
 
-  if (d <= friday) return 1;
+  let minggu;
+  if (d <= friday) {
+    minggu = 1;
+  } else {
+    const nextMonday = new Date(friday);
+    nextMonday.setDate(friday.getDate() + 3);
 
-  const nextMonday = new Date(friday);
-  nextMonday.setDate(friday.getDate() + 3);
+    const diffDays = Math.floor((d - nextMonday) / 86400000);
+    minggu = Math.min(2 + Math.floor(diffDays / 7), 5);
+  }
 
-  const diffDays = Math.floor((d - nextMonday) / (1000 * 60 * 60 * 24));
-  return Math.min(2 + Math.floor(diffDays / 7), 5);
+  console.log(
+    '[DEBUG MINGGU]',
+    tanggalStr,
+    'firstWorkday=', first.toISOString().slice(0,10),
+    'fridayM1=', friday.toISOString().slice(0,10),
+    '=> M', minggu
+  );
+
+  return minggu;
 }
+
 /*************************************************
  * IPH MINGGUAN (SQL + JS)
  *************************************************/
@@ -156,28 +170,43 @@ async function loadIphMingguan() {
   const komoditas = getCheckedValues('filterKomoditasList');
   const pasar = getCheckedValues('filterPasarList');
 
+  console.log('FILTER DIPILIH:', {
+    tahun,
+    bulan,
+    komoditas,
+    pasar
+  });
+
   let url =
     `${SUPABASE_URL}/rest/v1/v_iph_harian_bersih`
     + `?tahun=eq.${tahun}`
     + `&bulan=eq.${bulan}`;
 
-  // filter komoditas
   if (komoditas.length > 0) {
     url += `&id_komoditas=in.(${komoditas.join(',')})`;
   }
 
-  // filter pasar
   if (pasar.length > 0) {
     url += `&id_pasar=in.(${pasar.join(',')})`;
   }
 
   url += `&order=nama_komoditas.asc&order=tanggal.asc`;
 
+  console.log('URL REQUEST:', url);
+
   const res = await fetch(url, { headers });
-  renderIphMingguan(await res.json());
+  const data = await res.json();
+
+  console.log('JUMLAH DATA HARIAN MASUK:', data.length);
+  console.log('SAMPEL 10 BARIS DATA:', data.slice(0, 10));
+
+  renderIphMingguan(data);
 }
 
+
 function renderIphMingguan(data) {
+  console.log('--- RENDER IPH MINGGUAN ---');
+  console.log('TOTAL BARIS DATA:', data.length);
   const el = document.getElementById('iphMingguan');
   if (!data.length) {
     el.innerHTML = '<em>Tidak ada data</em>';
@@ -276,6 +305,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadFilterKomoditas();
   await loadFilterPasar();
 });
+
 
 
 
