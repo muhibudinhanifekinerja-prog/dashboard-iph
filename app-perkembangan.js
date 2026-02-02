@@ -336,30 +336,7 @@ async function loadIphMingguan() {
 
   const res = await fetch(url, { headers });
   const data = await res.json();
- // dataHarian = hasil fetch bulan aktif (SUDAH ADA)
-  const kumulatifBulanIni = hitungMingguanKumulatif(dataHarian);
-  // ambil bulan lalu
-  const { bulanLalu, tahunLalu } = getBulanLalu(
-    filterBulan,
-    filterTahun
-  );
-// fetch data harian bulan lalu
-  const dataHarianBulanLalu = await fetchHargaHarian(
-    tahunLalu,
-    bulanLalu,
-    selectedKomoditas,
-    selectedPasar
-  );
-  const kumulatifBulanLalu =
-    hitungMingguanKumulatif(dataHarianBulanLalu);
-  
-  // % perubahan
-  const dataPerubahan =
-    hitungPerubahanMingguanVsBulanLalu(
-      kumulatifBulanIni,
-      kumulatifBulanLalu
-    );
-  renderPerubahanMingguan(dataPerubahan);
+  //renderPerubahanMingguan(dataPerubahan);
   renderIphMingguan(data);
   renderLogMingguan(data);
   renderLogTableMingguan(data);
@@ -513,6 +490,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
