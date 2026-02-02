@@ -54,7 +54,128 @@ function mingguKeLaporan(tanggalStr) {
 }
 
 /************************************************************
- * HITUNG RATA-RATA MINGGUAN KUMULATIF
+ * LOAD FILTER MASTER
+ ************************************************************/
+async function loadFilterTahun() {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/v_tahun_data?select=tahun&order=tahun.desc`,
+    { headers }
+  );
+  const data = await res.json();
+  const el = document.getElementById("filterTahun");
+  el.innerHTML = "";
+  data.forEach(d => {
+    el.innerHTML += `<option value="${d.tahun}">${d.tahun}</option>`;
+  });
+}
+
+async function loadFilterKomoditas() {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/komoditas?select=id_komoditas,nama_komoditas&order=nama_komoditas.asc`,
+    { headers }
+  );
+  const data = await res.json();
+  const el = document.getElementById("filterKomoditasList");
+  el.innerHTML = "";
+  data.forEach(d => {
+    el.innerHTML += `
+      <li>
+        <label>
+          <input type="checkbox" value="${d.id_komoditas}">
+          ${d.nama_komoditas}
+        </label>
+      </li>`;
+  });
+}
+
+async function loadFilterPasar() {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/pasar?select=id_pasar,nama_pasar&order=nama_pasar.asc`,
+    { headers }
+  );
+  const data = await res.json();
+  const el = document.getElementById("filterPasarList");
+  el.innerHTML = "";
+  data.forEach(d => {
+    el.innerHTML += `
+      <li>
+        <label>
+          <input type="checkbox" value="${d.id_pasar}">
+          ${d.nama_pasar}
+        </label>
+      </li>`;
+  });
+}
+
+/************************************************************
+ * LOAD HARGA HARIAN
+ ************************************************************/
+async function loadHargaHarian() {
+  const tahun = filterTahun.value;
+  const bulan = filterBulan.value;
+  const komoditas = getCheckedValues("filterKomoditasList");
+  const pasar = getCheckedValues("filterPasarList");
+
+  const start = `${tahun}-${String(bulan).padStart(2, "0")}-01`;
+  const end = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
+
+  let url =
+    `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap` +
+    `?tanggal=gte.${start}&tanggal=lte.${end}` +
+    `&order=nama_komoditas.asc&order=nama_pasar.asc&order=tanggal.asc`;
+
+  if (komoditas.length)
+    url += `&id_komoditas=in.(${komoditas.join(",")})`;
+  if (pasar.length)
+    url += `&id_pasar=in.(${pasar.join(",")})`;
+
+  const res = await fetch(url, { headers });
+  const data = await res.json();
+  renderHargaHarian(data);
+}
+
+/************************************************************
+ * RENDER HARGA HARIAN
+ ************************************************************/
+function renderHargaHarian(data) {
+  const el = document.getElementById("hargaHarian");
+  if (!data.length) {
+    el.innerHTML = "<em>Tidak ada data</em>";
+    return;
+  }
+
+  const tanggalList = [...new Set(data.map(d => d.tanggal))].sort();
+  const grup = {};
+
+  data.forEach(d => {
+    const key = `${d.id_komoditas}-${d.id_pasar}`;
+    grup[key] ??= {
+      komoditas: d.nama_komoditas,
+      pasar: d.nama_pasar,
+      harga: {}
+    };
+    grup[key].harga[d.tanggal] = d.harga;
+  });
+
+  let html = `<table class="table table-bordered table-sm table-dashboard">
+    <thead><tr><th>No</th><th>Komoditas</th><th>Pasar</th>`;
+  tanggalList.forEach(t => (html += `<th>${t}</th>`));
+  html += `</tr></thead><tbody>`;
+
+  let no = 1;
+  Object.values(grup).forEach(r => {
+    html += `<tr><td>${no++}</td><td>${r.komoditas}</td><td>${r.pasar}</td>`;
+    tanggalList.forEach(t => {
+      html += `<td class="text-end">${r.harga[t] ? formatRupiah(r.harga[t]) : "-"}</td>`;
+    });
+    html += `</tr>`;
+  });
+
+  el.innerHTML = html + "</tbody></table>";
+}
+
+/************************************************************
+ * HITUNG MINGGUAN KUMULATIF
  ************************************************************/
 function hitungMingguanKumulatif(data) {
   const mingguMap = {};
@@ -88,7 +209,7 @@ function hitungMingguanKumulatif(data) {
 }
 
 /************************************************************
- * PERUBAHAN VS BULAN LALU
+ * IPH & PERUBAHAN
  ************************************************************/
 function hitungPerubahanMingguanVsBulanLalu(bulanIni, bulanLalu) {
   const mingguAkhir = Math.max(...bulanLalu.mingguList);
@@ -104,50 +225,18 @@ function hitungPerubahanMingguanVsBulanLalu(bulanIni, bulanLalu) {
     bulanIni.komoditasList.forEach(k => {
       const base = baseline[k];
       const curr = bulanIni.hasil[m][k];
-      perubahan[m][k] =
-        base && curr ? ((curr - base) / base) * 100 : null;
+      perubahan[m][k] = base && curr ? ((curr - base) / base) * 100 : null;
     });
   });
 
-  return {
-    mingguList: bulanIni.mingguList,
-    komoditasList: bulanIni.komoditasList,
-    perubahan
-  };
+  return { mingguList: bulanIni.mingguList, komoditasList: bulanIni.komoditasList, perubahan };
 }
 
-/************************************************************
- * FETCH DATA HARGA HARIAN
- ************************************************************/
-async function fetchHargaHarian(tahun, bulan, komoditas, pasar) {
-  const start = `${tahun}-${String(bulan).padStart(2, "0")}-01`;
-  const end = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
-
-  let url =
-    `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap` +
-    `?tanggal=gte.${start}&tanggal=lte.${end}`;
-
-  if (komoditas.length) url += `&id_komoditas=in.(${komoditas.join(",")})`;
-  if (pasar.length) url += `&id_pasar=in.(${pasar.join(",")})`;
-
-  const res = await fetch(url, { headers });
-  return await res.json();
-}
-
-/************************************************************
- * RENDER IPH MINGGUAN
- ************************************************************/
 function renderIphMingguan(data) {
   const el = document.getElementById("iphMingguan");
-  const { mingguList, komoditasList, hasil } =
-    hitungMingguanKumulatif(data);
+  const { mingguList, komoditasList, hasil } = hitungMingguanKumulatif(data);
 
-  let html =
-    `<table class="table table-bordered table-sm">
-      <thead>
-        <tr>
-          <th>Komoditas</th>`;
-
+  let html = `<table class="table table-bordered table-sm"><thead><tr><th>Komoditas</th>`;
   mingguList.forEach(m => (html += `<th>M${m}</th>`));
   html += `</tr></thead><tbody>`;
 
@@ -163,18 +252,10 @@ function renderIphMingguan(data) {
   el.innerHTML = html + "</tbody></table>";
 }
 
-/************************************************************
- * RENDER % PERUBAHAN MINGGUAN
- ************************************************************/
 function renderPerubahanMingguan(data) {
   const el = document.getElementById("perubahanPersen");
 
-  let html =
-    `<table class="table table-bordered table-sm">
-      <thead>
-        <tr>
-          <th>Komoditas</th>`;
-
+  let html = `<table class="table table-bordered table-sm"><thead><tr><th>Komoditas</th>`;
   data.mingguList.forEach(m => (html += `<th>M${m}</th>`));
   html += `</tr></thead><tbody>`;
 
@@ -194,7 +275,7 @@ function renderPerubahanMingguan(data) {
 }
 
 /************************************************************
- * MAIN LOAD
+ * MAIN
  ************************************************************/
 async function loadIphMingguan() {
   const tahun = Number(filterTahun.value);
@@ -202,27 +283,16 @@ async function loadIphMingguan() {
   const komoditas = getCheckedValues("filterKomoditasList");
   const pasar = getCheckedValues("filterPasarList");
 
-  const dataBulanIni = await fetchHargaHarian(
-    tahun,
-    bulan,
-    komoditas,
-    pasar
-  );
+  const dataBulanIni = await fetchHargaHarian(tahun, bulan, komoditas, pasar);
   const kumulatifIni = hitungMingguanKumulatif(dataBulanIni);
 
   const bulanLalu = bulan === 1 ? 12 : bulan - 1;
   const tahunLalu = bulan === 1 ? tahun - 1 : tahun;
 
-  const dataBulanLalu = await fetchHargaHarian(
-    tahunLalu,
-    bulanLalu,
-    komoditas,
-    pasar
-  );
+  const dataBulanLalu = await fetchHargaHarian(tahunLalu, bulanLalu, komoditas, pasar);
   const kumulatifLalu = hitungMingguanKumulatif(dataBulanLalu);
 
-  const perubahan =
-    hitungPerubahanMingguanVsBulanLalu(kumulatifIni, kumulatifLalu);
+  const perubahan = hitungPerubahanMingguanVsBulanLalu(kumulatifIni, kumulatifLalu);
 
   renderIphMingguan(dataBulanIni);
   renderPerubahanMingguan(perubahan);
@@ -231,4 +301,13 @@ async function loadIphMingguan() {
 /************************************************************
  * EVENT
  ************************************************************/
-document.getElementById("btnTampil").onclick = loadIphMingguan;
+document.getElementById("btnTampil").onclick = () => {
+  loadHargaHarian();
+  loadIphMingguan();
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadFilterTahun();
+  loadFilterKomoditas();
+  loadFilterPasar();
+});
