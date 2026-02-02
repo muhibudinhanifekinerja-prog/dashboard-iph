@@ -294,105 +294,18 @@ function renderLogMingguan(data) {
   el.textContent = log;
 }
 
-function renderLogTableMingguan(data) {
-  const container = document.getElementById("logTableMingguan");
-  if (!container || !data || data.length === 0) {
-    if (container) container.innerHTML = "<em>Tidak ada data debug</em>";
-    return;
-  }
-
-  // daftar komoditas & tanggal
-  const komoditasList = [...new Set(data.map(d => d.nama_komoditas))].sort();
-  const tanggalList = [...new Set(data.map(d => d.tanggal))].sort();
-
-  // helper simpan harga per tanggal
-  const hargaMap = {};
-  data.forEach(d => {
-    hargaMap[d.tanggal] ??= {};
-    hargaMap[d.tanggal][d.nama_komoditas] = d.harga;
-  });
-
-  let html = `<table class="table table-bordered table-sm">
-    <thead>
-      <tr>
-        <th>Tanggal</th>`;
-  komoditasList.forEach(k => html += `<th>${k}</th>`);
-  html += `</tr>
-    </thead>
-    <tbody>`;
-
-  let lastMinggu = null;
-  let buffer = {}; // penampung harga per minggu
-
-  tanggalList.forEach((tgl, idx) => {
-    const minggu = mingguKeLaporan(tgl);
-
-    // 🔹 jika ganti minggu → tampilkan rata-rata minggu sebelumnya
-    if (lastMinggu !== null && minggu !== lastMinggu) {
-      html += renderBarisRataMingguan(buffer, komoditasList, lastMinggu);
-      buffer = {};
-    }
-
-    // 🔹 baris tanggal
-    html += `<tr>
-      <td>${tgl}</td>`;
-
-    komoditasList.forEach(k => {
-      const val = hargaMap[tgl]?.[k] ?? null;
-      if (val !== null) {
-        buffer[k] ??= [];
-        buffer[k].push(val);
-      }
-      html += `<td class="text-end">${val ? formatRupiah(val) : "-"}</td>`;
-    });
-
-    html += `</tr>`;
-    lastMinggu = minggu;
-  });
-
-  // 🔹 rata-rata minggu terakhir
-  html += renderBarisRataMingguan(buffer, komoditasList, lastMinggu);
-
-  html += `</tbody></table>`;
-  container.innerHTML = html;
-}
-
-/* ============================
-   BARIS RATA-RATA PER MINGGU
-   ============================ */
-function renderBarisRataMingguan(buffer, komoditasList, mingguKe) {
-  let row = `<tr style="background:#f8f9fa;font-weight:bold">
-    <td>Rata-rata M${mingguKe}</td>`;
-
-  komoditasList.forEach(k => {
-    const arr = buffer[k] || [];
-    const avg = arr.length
-      ? arr.reduce((a, b) => a + b, 0) / arr.length
-      : null;
-
-    row += `<td class="text-end">${avg ? formatRupiah(avg) : "-"}</td>`;
-  });
-
-  return row + `</tr>`;
-}
-
 function renderLogTableMingguanKumulatif(data) {
-  const el = document.getElementById("logTableMingguanKumulatif");
-
-  // 🔒 JIKA ELEMEN BELUM ADA, JANGAN CRASH
-  if (!el) {
-    console.warn("Elemen #logTableMingguanKumulatif belum ada");
+  const container = document.getElementById("logTableMingguanKumulatif");
+  if (!container || !data || data.length === 0) {
+    if (container) container.innerHTML = "<em>Tidak ada data debug kumulatif</em>";
     return;
   }
 
-  if (!data || data.length === 0) {
-    el.innerHTML = "<em>Tidak ada data debug kumulatif</em>";
-    return;
-  }
-
+  // daftar komoditas
   const komoditasList = [...new Set(data.map(d => d.nama_komoditas))].sort();
-  const mingguMap = {};
 
+  // kelompokkan data harian ke minggu
+  const mingguMap = {};
   data.forEach(d => {
     const m = mingguKeLaporan(d.tanggal);
     mingguMap[m] ??= {};
@@ -400,22 +313,51 @@ function renderLogTableMingguanKumulatif(data) {
     mingguMap[m][d.nama_komoditas].push(d.harga);
   });
 
-  let html = "<thead><tr><th>Minggu</th>";
-  komoditasList.forEach(k => html += `<th>${k}</th>`);
-  html += "</tr></thead><tbody>";
+  const mingguList = Object.keys(mingguMap)
+    .map(Number)
+    .sort((a, b) => a - b);
 
-  Object.keys(mingguMap).sort((a,b)=>a-b).forEach(m => {
-    html += `<tr><td>M${m}</td>`;
+  // penampung data HARIAN kumulatif
+  const kumulatifData = {};
+  komoditasList.forEach(k => kumulatifData[k] = []);
+
+  // render tabel
+  let html = `<table class="table table-bordered table-sm">
+    <thead>
+      <tr>
+        <th>Minggu</th>`;
+  komoditasList.forEach(k => html += `<th>${k}</th>`);
+  html += `</tr>
+    </thead>
+    <tbody>`;
+
+  mingguList.forEach(m => {
+    html += `<tr>
+      <td><strong>M${m}</strong></td>`;
+
     komoditasList.forEach(k => {
-      const arr = mingguMap[m][k] || [];
-      const avg = arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
-      html += `<td class="text-end">${avg ? formatRupiah(avg) : "-"}</td>`;
+      // TAMBAHKAN DATA HARIAN minggu ini ke kumulatif
+      if (mingguMap[m][k]) {
+        kumulatifData[k].push(...mingguMap[m][k]);
+      }
+
+      const arr = kumulatifData[k];
+      const avg = arr.length
+        ? arr.reduce((a, b) => a + b, 0) / arr.length
+        : null;
+
+      html += `<td class="text-end">
+        ${avg ? formatRupiah(avg) : "-"}
+      </td>`;
     });
-    html += "</tr>";
+
+    html += `</tr>`;
   });
 
-  el.innerHTML = html;
+  html += `</tbody></table>`;
+  container.innerHTML = html;
 }
+
 /************************************************************
  * EVENT
  ************************************************************/
@@ -429,6 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
