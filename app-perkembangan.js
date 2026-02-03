@@ -64,10 +64,14 @@ function exportTableToExcel(tableId, filename) {
 }
 function exportTableToPDF(tableId, title, filename) {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF("l", "mm", "a4");
+  const doc = new jsPDF({
+    orientation: "landscape",
+    unit: "mm",
+    format: "a4"
+  });
 
   doc.setFontSize(12);
-  doc.text(title, 14, 15);
+  doc.text(title, 14, 12);
 
   const table = document.querySelector(`#${tableId} table`);
   if (!table) {
@@ -77,12 +81,54 @@ function exportTableToPDF(tableId, title, filename) {
 
   doc.autoTable({
     html: table,
-    startY: 20,
-    styles: { fontSize: 8 }
+
+    startY: 18,
+
+    // 👉 BIAR TABEL PECAH HALAMAN
+    pageBreak: "auto",
+
+    // 👉 JANGAN PAKSA LEBAR
+    tableWidth: "auto",
+
+    styles: {
+      fontSize: 7,
+      cellPadding: 2,
+      overflow: "linebreak",
+      halign: "right",
+      valign: "middle"
+    },
+
+    headStyles: {
+      fillColor: [41, 128, 185],
+      textColor: 255,
+      fontSize: 7,
+      halign: "center"
+    },
+
+    bodyStyles: {
+      fontSize: 7
+    },
+
+    columnStyles: {
+      0: { halign: "center", cellWidth: 10 },   // No
+      1: { halign: "left", cellWidth: 35 },     // Komoditas
+      2: { halign: "left", cellWidth: 30 }      // Pasar
+      // kolom tanggal BIAR OTOMATIS
+    },
+
+    didDrawPage: function () {
+      doc.setFontSize(9);
+      doc.text(
+        `Dicetak: ${new Date().toLocaleDateString("id-ID")}`,
+        doc.internal.pageSize.getWidth() - 50,
+        12
+      );
+    }
   });
 
   doc.save(filename);
 }
+
 function exportHargaHarianExcel() {
   exportTableToExcel(
     "hargaHarian",
@@ -510,6 +556,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
