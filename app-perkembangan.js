@@ -301,6 +301,104 @@ async function fetchHargaHarian(tahun, bulan, komoditas, pasar) {
 
   return await res.json();
 }
+/************************************************************
+ * DEBUG: LOG PEMBAGIAN MINGGU
+ ************************************************************/
+function renderLogMingguan(data) {
+  const el = document.getElementById("logMingguan");
+  if (!el || !data.length) {
+    el.textContent = "Tidak ada data debug";
+    return;
+  }
+
+  const tanggalList = [...new Set(data.map(d => d.tanggal))].sort();
+  let log = "";
+  let lastMinggu = null;
+
+  tanggalList.forEach((tgl, i) => {
+    const m = mingguKeLaporan(tgl);
+    const d = new Date(tgl);
+
+    if (i === 0) {
+      log += `${d.toLocaleString("id-ID", { month: "long" })} ${d.getFullYear()}\n`;
+      log += "-----------------------------------\n\n";
+    }
+
+    if (lastMinggu !== null && lastMinggu !== m) {
+      log += "-----------------------------------\n\n";
+    }
+
+    log += `${d.toLocaleDateString("id-ID")} → M${m}\n`;
+    lastMinggu = m;
+  });
+
+  el.textContent = log;
+}
+
+/************************************************************
+ * DEBUG: TABEL HARIAN → MINGGU
+ ************************************************************/
+function renderLogTableMingguan(data) {
+  const el = document.getElementById("logTableMingguan");
+  if (!el || !data.length) {
+    el.innerHTML = "<em>Tidak ada data debug</em>";
+    return;
+  }
+
+  const komoditasList = [...new Set(data.map(d => d.nama_komoditas))].sort();
+  const tanggalList = [...new Set(data.map(d => d.tanggal))].sort();
+
+  const map = {};
+  data.forEach(d => {
+    map[d.tanggal] ??= {};
+    map[d.tanggal][d.nama_komoditas] = d.harga;
+  });
+
+  let html = `<table class="table table-bordered table-sm">
+    <thead><tr><th>Tanggal</th>`;
+  komoditasList.forEach(k => (html += `<th>${k}</th>`));
+  html += `</tr></thead><tbody>`;
+
+  tanggalList.forEach(t => {
+    html += `<tr><td>${t}</td>`;
+    komoditasList.forEach(k => {
+      html += `<td class="text-end">${map[t]?.[k] ? formatRupiah(map[t][k]) : "-"}</td>`;
+    });
+    html += `</tr>`;
+  });
+
+  el.innerHTML = html + "</tbody></table>";
+}
+
+/************************************************************
+ * DEBUG: TABEL MINGGUAN KUMULATIF
+ ************************************************************/
+function renderLogTableMingguanKumulatif(data) {
+  const el = document.getElementById("logTableMingguanKumulatif");
+  if (!el || !data.length) {
+    el.innerHTML = "<em>Tidak ada data debug</em>";
+    return;
+  }
+
+  const { mingguList, komoditasList, hasil } =
+    hitungMingguanKumulatif(data);
+
+  let html = `<table class="table table-bordered table-sm">
+    <thead><tr><th>Minggu</th>`;
+  komoditasList.forEach(k => (html += `<th>${k}</th>`));
+  html += `</tr></thead><tbody>`;
+
+  mingguList.forEach(m => {
+    html += `<tr><td>M${m}</td>`;
+    komoditasList.forEach(k => {
+      const v = hasil[m][k];
+      html += `<td class="text-end">${v ? formatRupiah(v) : "-"}</td>`;
+    });
+    html += `</tr>`;
+  });
+
+  el.innerHTML = html + "</tbody></table>";
+}
 
 /************************************************************
  * MAIN
@@ -339,4 +437,5 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
