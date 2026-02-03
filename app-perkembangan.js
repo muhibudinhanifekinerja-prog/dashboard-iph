@@ -52,6 +52,79 @@ function mingguKeLaporan(tanggalStr) {
   const diffDays = Math.floor((d - nextMonday) / 86400000);
   return Math.min(2 + Math.floor(diffDays / 7), 5);
 }
+function exportTableToExcel(tableId, filename) {
+  const table = document.querySelector(`#${tableId} table`);
+  if (!table) {
+    alert("Data belum tersedia");
+    return;
+  }
+
+  const wb = XLSX.utils.table_to_book(table, { sheet: "Data" });
+  XLSX.writeFile(wb, filename);
+}
+function exportTableToPDF(tableId, title, filename) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("l", "mm", "a4");
+
+  doc.setFontSize(12);
+  doc.text(title, 14, 15);
+
+  const table = document.querySelector(`#${tableId} table`);
+  if (!table) {
+    alert("Data belum tersedia");
+    return;
+  }
+
+  doc.autoTable({
+    html: table,
+    startY: 20,
+    styles: { fontSize: 8 }
+  });
+
+  doc.save(filename);
+}
+function exportHargaHarianExcel() {
+  exportTableToExcel(
+    "hargaHarian",
+    `harga_harian_${filterTahun.value}_${filterBulan.value}.xlsx`
+  );
+}
+
+function exportHargaHarianPDF() {
+  exportTableToPDF(
+    "hargaHarian",
+    "Harga Harian",
+    `harga_harian_${filterTahun.value}_${filterBulan.value}.pdf`
+  );
+}
+function exportMingguanExcel() {
+  exportTableToExcel(
+    "iphMingguan",
+    `rata_rata_mingguan_${filterTahun.value}_${filterBulan.value}.xlsx`
+  );
+}
+
+function exportMingguanPDF() {
+  exportTableToPDF(
+    "iphMingguan",
+    "Rata-rata Harga Mingguan (Kumulatif)",
+    `rata_rata_mingguan_${filterTahun.value}_${filterBulan.value}.pdf`
+  );
+}
+function exportPerubahanExcel() {
+  exportTableToExcel(
+    "perubahanPersen",
+    `perubahan_mingguan_${filterTahun.value}_${filterBulan.value}.xlsx`
+  );
+}
+
+function exportPerubahanPDF() {
+  exportTableToPDF(
+    "perubahanPersen",
+    "% Perubahan Harga Mingguan",
+    `perubahan_mingguan_${filterTahun.value}_${filterBulan.value}.pdf`
+  );
+}
 
 /************************************************************
  * LOAD FILTER MASTER
@@ -437,5 +510,6 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
