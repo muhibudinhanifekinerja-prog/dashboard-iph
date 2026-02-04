@@ -137,6 +137,25 @@ async function loadTabelRataBulanan() {
         },
       }
     );
+          // =========================
+    // 1. Ambil bulan unik dari data
+    // =========================
+    const bulanView = [...new Set(data.map(d => d.bulan))]
+      .sort((a, b) => new Date(a) - new Date(b));
+    
+    // =========================
+    // 2. Tentukan BULAN TERAKHIR (data-driven)
+    // =========================
+    const bulanTerakhir = new Date(bulanView[bulanView.length - 1]);
+    
+    // =========================
+    // 3. Bangun 4 bulan: 3 bulan sebelum + bulan terakhir
+    // =========================
+    const bulanList = [];
+    for (let i = 3; i >= 0; i--) {
+      const d = new Date(bulanTerakhir.getFullYear(), bulanTerakhir.getMonth() - i, 1);
+      bulanList.push(d.toISOString().slice(0, 10));
+    }
 
     const data = await res.json();
     if (!data || data.length === 0) return;
@@ -149,7 +168,7 @@ async function loadTabelRataBulanan() {
     // =========================
     // 2. Tambahkan BULAN BERJALAN
     // =========================
-    const now = new Date();
+    
     const bulanBerjalan = new Date(now.getFullYear(), now.getMonth(), 1)
       .toISOString().slice(0, 10);
 
@@ -171,7 +190,7 @@ async function loadTabelRataBulanan() {
       const nama = tgl.toLocaleString('id-ID', { month: 'short' });
       const tahun = tgl.getFullYear();
       const isBerjalan = idx === bulanList.length - 1;
-
+    
       header.innerHTML += `
         <th class="text-end">
           ${nama} ${tahun}
@@ -401,6 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTabelRataBulanan();
   loadNarasiOtomatis();
 });
+
 
 
 
