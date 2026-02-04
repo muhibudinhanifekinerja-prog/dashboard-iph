@@ -159,12 +159,6 @@ async function loadTabelRataBulanan() {
 
     const data = await res.json();
     if (!data || data.length === 0) return;
-
-    // =========================
-    // 1. Bulan dari VIEW
-    // =========================
-    const bulanView = [...new Set(data.map(d => d.bulan))];
-
     // =========================
     // 2. Tambahkan BULAN BERJALAN
     // =========================
@@ -420,6 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTabelRataBulanan();
   loadNarasiOtomatis();
 });
+
 
 
 
