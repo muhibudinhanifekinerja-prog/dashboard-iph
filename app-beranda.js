@@ -137,41 +137,36 @@ async function loadTabelRataBulanan() {
         },
       }
     );
-          // =========================
-    // 1. Ambil bulan unik dari data
+
+    const data = await res.json();
+    if (!data || data.length === 0) return;
+
+    // =========================
+    // 1. Ambil & urutkan bulan dari DATA
     // =========================
     const bulanView = [...new Set(data.map(d => d.bulan))]
       .sort((a, b) => new Date(a) - new Date(b));
-    
+
     // =========================
     // 2. Tentukan BULAN TERAKHIR (data-driven)
     // =========================
     const bulanTerakhir = new Date(bulanView[bulanView.length - 1]);
-    
+
     // =========================
-    // 3. Bangun 4 bulan: 3 bulan sebelum + bulan terakhir
+    // 3. Bangun 4 bulan: 3 sebelum + terakhir
     // =========================
     const bulanList = [];
     for (let i = 3; i >= 0; i--) {
-      const d = new Date(bulanTerakhir.getFullYear(), bulanTerakhir.getMonth() - i, 1);
+      const d = new Date(
+        bulanTerakhir.getFullYear(),
+        bulanTerakhir.getMonth() - i,
+        1
+      );
       bulanList.push(d.toISOString().slice(0, 10));
     }
 
-    const data = await res.json();
-    if (!data || data.length === 0) return;
     // =========================
-    // 2. Tambahkan BULAN BERJALAN
-    // =========================
-    
-    const bulanBerjalan = new Date(now.getFullYear(), now.getMonth(), 1)
-      .toISOString().slice(0, 10);
-
-    const bulanList = bulanView.includes(bulanBerjalan)
-      ? bulanView
-      : [...bulanView, bulanBerjalan];
-
-    // =========================
-    // 3. Render HEADER
+    // 4. Render HEADER
     // =========================
     const header = document.getElementById('headerBulan');
     header.innerHTML = `
@@ -184,7 +179,7 @@ async function loadTabelRataBulanan() {
       const nama = tgl.toLocaleString('id-ID', { month: 'short' });
       const tahun = tgl.getFullYear();
       const isBerjalan = idx === bulanList.length - 1;
-    
+
       header.innerHTML += `
         <th class="text-end">
           ${nama} ${tahun}
@@ -194,7 +189,7 @@ async function loadTabelRataBulanan() {
     });
 
     // =========================
-    // 4. Kelompokkan data
+    // 5. Kelompokkan data per komoditas
     // =========================
     const map = {};
     data.forEach(d => {
@@ -208,7 +203,7 @@ async function loadTabelRataBulanan() {
     });
 
     // =========================
-    // 5. Render BODY
+    // 6. Render BODY
     // =========================
     const body = document.getElementById('bodyTable');
     body.innerHTML = '';
@@ -249,6 +244,7 @@ async function loadTabelRataBulanan() {
     console.error('Error loadTabelRataBulanan:', err);
   }
 }
+
 async function loadNarasiOtomatis() {
   try {
     // =========================
@@ -414,6 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTabelRataBulanan();
   loadNarasiOtomatis();
 });
+
 
 
 
