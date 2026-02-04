@@ -129,7 +129,7 @@ async function loadVolatilitas30HariCard() {
 async function loadTabelRataBulanan() {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/v_rata_bulanan_3_bulan?select=id_komoditas,nama_komoditas,bulan,harga_rata&order=bulan.asc`,
+      `${SUPABASE_URL}/rest/v1/v_rata_bulanan_4_bulan?select=id_komoditas,nama_komoditas,bulan,harga_rata&order=bulan.asc`,
       {
         headers: {
           apikey: SUPABASE_KEY,
@@ -142,24 +142,12 @@ async function loadTabelRataBulanan() {
     if (!data || data.length === 0) return;
 
     // =========================
-    // 1. Ambil bulan unik dari DATA
+    // 1. Bulan (PASTI 4)
     // =========================
-    const bulanView = [...new Set(data.map(d => d.bulan))]
-      .sort((a, b) => new Date(a) - new Date(b));
+    const bulanList = [...new Set(data.map(d => d.bulan))];
 
     // =========================
-    // 2. BULAN TERAKHIR = data terakhir
-    // =========================
-    const bulanTerakhir = new Date(bulanView[bulanView.length - 1]);
-
-    // 3. Bulan untuk tabel:
-    //    3 bulan terakhir dari VIEW + bulan terakhir
-    // =========================
-    const bulanList = bulanView.slice(-4);
-
-
-    // =========================
-    // 4. HEADER
+    // 2. HEADER
     // =========================
     const header = document.getElementById('headerBulan');
     header.innerHTML = `
@@ -182,7 +170,7 @@ async function loadTabelRataBulanan() {
     });
 
     // =========================
-    // 5. KELOMPOKKAN DATA
+    // 3. KELOMPOKKAN DATA
     // =========================
     const map = {};
     data.forEach(d => {
@@ -192,11 +180,13 @@ async function loadTabelRataBulanan() {
           harga: {}
         };
       }
-      map[d.id_komoditas].harga[d.bulan] = Math.round(d.harga_rata);
+      if (d.harga_rata !== null) {
+        map[d.id_komoditas].harga[d.bulan] = d.harga_rata;
+      }
     });
 
     // =========================
-    // 6. BODY
+    // 4. BODY
     // =========================
     const body = document.getElementById('bodyTable');
     body.innerHTML = '';
@@ -237,6 +227,7 @@ async function loadTabelRataBulanan() {
     console.error('Error loadTabelRataBulanan:', err);
   }
 }
+
 async function loadNarasiOtomatis() {
   try {
     // =========================
@@ -402,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTabelRataBulanan();
   loadNarasiOtomatis();
 });
+
 
 
 
