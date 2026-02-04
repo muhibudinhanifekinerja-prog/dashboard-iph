@@ -159,12 +159,10 @@ async function loadTabelRataBulanan() {
       const tgl = new Date(b);
       const nama = tgl.toLocaleString('id-ID', { month: 'short' });
       const tahun = tgl.getFullYear();
-      const isBerjalan = idx === bulanList.length - 1;
 
       header.innerHTML += `
         <th class="text-end">
           ${nama} ${tahun}
-          ${isBerjalan ? '<br><span class="text-muted small">(berjalan)</span>' : ''}
         </th>
       `;
     });
@@ -393,6 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTabelRataBulanan();
   loadNarasiOtomatis();
 });
+
 
 
 
