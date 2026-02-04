@@ -142,17 +142,23 @@ async function loadTabelRataBulanan() {
     if (!data || data.length === 0) return;
 
     // =========================
-    // 1. Daftar bulan unik
+    // 1. Bulan dari VIEW
     // =========================
-    const bulanList = [...new Set(data.map(d => d.bulan))];
-
-    const tahunSet = new Set(
-      bulanList.map(b => new Date(b).getFullYear())
-    );
-    const lintasTahun = tahunSet.size > 1;
+    const bulanView = [...new Set(data.map(d => d.bulan))];
 
     // =========================
-    // 2. Render HEADER
+    // 2. Tambahkan BULAN BERJALAN
+    // =========================
+    const now = new Date();
+    const bulanBerjalan = new Date(now.getFullYear(), now.getMonth(), 1)
+      .toISOString().slice(0, 10);
+
+    const bulanList = bulanView.includes(bulanBerjalan)
+      ? bulanView
+      : [...bulanView, bulanBerjalan];
+
+    // =========================
+    // 3. Render HEADER
     // =========================
     const header = document.getElementById('headerBulan');
     header.innerHTML = `
@@ -160,20 +166,22 @@ async function loadTabelRataBulanan() {
       <th>Komoditas</th>
     `;
 
-    bulanList.forEach(b => {
+    bulanList.forEach((b, idx) => {
       const tgl = new Date(b);
-      const namaBulan = tgl.toLocaleString('id-ID', { month: 'short' });
+      const nama = tgl.toLocaleString('id-ID', { month: 'short' });
       const tahun = tgl.getFullYear();
+      const isBerjalan = idx === bulanList.length - 1;
 
       header.innerHTML += `
         <th class="text-end">
-          ${lintasTahun ? `${namaBulan} ${tahun}` : namaBulan}
+          ${nama} ${tahun}
+          ${isBerjalan ? '<br><span class="text-muted small">(berjalan)</span>' : ''}
         </th>
       `;
     });
 
     // =========================
-    // 3. Kelompokkan per komoditas
+    // 4. Kelompokkan data
     // =========================
     const map = {};
     data.forEach(d => {
@@ -187,7 +195,7 @@ async function loadTabelRataBulanan() {
     });
 
     // =========================
-    // 4. Render BODY + indikator
+    // 5. Render BODY
     // =========================
     const body = document.getElementById('bodyTable');
     body.innerHTML = '';
@@ -201,11 +209,11 @@ async function loadTabelRataBulanan() {
       `;
 
       bulanList.forEach((b, idx) => {
-        const curr = k.harga[b];
-        const prev = idx > 0 ? k.harga[bulanList[idx - 1]] : null;
+        const curr = k.harga[b] ?? null;
+        const prev = idx > 0 ? k.harga[bulanList[idx - 1]] ?? null : null;
 
         let indikator = '';
-        if (prev && curr) {
+        if (curr !== null && prev !== null) {
           if (curr > prev) indikator = '<span class="text-danger">▲</span>';
           else if (curr < prev) indikator = '<span class="text-success">▼</span>';
           else indikator = '<span class="text-muted">–</span>';
@@ -213,7 +221,9 @@ async function loadTabelRataBulanan() {
 
         row += `
           <td class="text-end">
-            ${curr ? `Rp ${formatRupiah(curr)} ${indikator}` : '-'}
+            ${curr !== null
+              ? `Rp ${formatRupiah(curr)} ${indikator}`
+              : '<span class="text-muted">–</span>'}
           </td>
         `;
       });
@@ -391,6 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTabelRataBulanan();
   loadNarasiOtomatis();
 });
+
 
 
 
