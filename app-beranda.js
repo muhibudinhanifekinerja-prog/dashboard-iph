@@ -142,18 +142,19 @@ async function loadTabelRataBulanan() {
     if (!data || data.length === 0) return;
 
     // =========================
-    // 1. Ambil & urutkan bulan dari DATA
+    // 1. Ambil bulan unik dari DATA
     // =========================
     const bulanView = [...new Set(data.map(d => d.bulan))]
       .sort((a, b) => new Date(a) - new Date(b));
 
     // =========================
-    // 2. Tentukan BULAN TERAKHIR (data-driven)
+    // 2. BULAN TERAKHIR = data terakhir
     // =========================
     const bulanTerakhir = new Date(bulanView[bulanView.length - 1]);
 
     // =========================
-    // 3. Bangun 4 bulan: 3 sebelum + terakhir
+    // 3. Bangun 4 bulan:
+    //    3 bulan sebelum + bulan terakhir
     // =========================
     const bulanList = [];
     for (let i = 3; i >= 0; i--) {
@@ -166,7 +167,7 @@ async function loadTabelRataBulanan() {
     }
 
     // =========================
-    // 4. Render HEADER
+    // 4. HEADER
     // =========================
     const header = document.getElementById('headerBulan');
     header.innerHTML = `
@@ -189,7 +190,7 @@ async function loadTabelRataBulanan() {
     });
 
     // =========================
-    // 5. Kelompokkan data per komoditas
+    // 5. KELOMPOKKAN DATA
     // =========================
     const map = {};
     data.forEach(d => {
@@ -203,7 +204,7 @@ async function loadTabelRataBulanan() {
     });
 
     // =========================
-    // 6. Render BODY
+    // 6. BODY
     // =========================
     const body = document.getElementById('bodyTable');
     body.innerHTML = '';
@@ -244,7 +245,6 @@ async function loadTabelRataBulanan() {
     console.error('Error loadTabelRataBulanan:', err);
   }
 }
-
 async function loadNarasiOtomatis() {
   try {
     // =========================
@@ -410,6 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTabelRataBulanan();
   loadNarasiOtomatis();
 });
+
 
 
 
