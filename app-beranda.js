@@ -152,19 +152,11 @@ async function loadTabelRataBulanan() {
     // =========================
     const bulanTerakhir = new Date(bulanView[bulanView.length - 1]);
 
+    // 3. Bulan untuk tabel:
+    //    3 bulan terakhir dari VIEW + bulan terakhir
     // =========================
-    // 3. Bangun 4 bulan:
-    //    3 bulan sebelum + bulan terakhir
-    // =========================
-    const bulanList = [];
-    for (let i = 3; i >= 0; i--) {
-      const d = new Date(
-        bulanTerakhir.getFullYear(),
-        bulanTerakhir.getMonth() - i,
-        1
-      );
-      bulanList.push(d.toISOString().slice(0, 10));
-    }
+    const bulanList = bulanView.slice(-4);
+
 
     // =========================
     // 4. HEADER
@@ -410,6 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadTabelRataBulanan();
   loadNarasiOtomatis();
 });
+
 
 
 
