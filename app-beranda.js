@@ -380,6 +380,78 @@ async function loadCardInflasi() {
     console.error('Error loadCardInflasi:', err);
   }
 }
+async function loadFilterTahunTriwulan() {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/v_rata_triwulan?select=tahun&order=tahun.desc`,
+    {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
+    }
+  );
+
+  const data = await res.json();
+  const tahunList = [...new Set(data.map(d => d.tahun))];
+
+  const select = document.getElementById('filterTahunTriwulan');
+  tahunList.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t;
+    select.appendChild(opt);
+  });
+}
+async function loadTabelTriwulan(tahun) {
+  if (!tahun) return;
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/v_rata_triwulan`
+    + `?tahun=eq.${tahun}`
+    + `&select=id_komoditas,nama_komoditas,triwulan,harga_rata`,
+    {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
+    }
+  );
+
+  const data = await res.json();
+  const map = {};
+
+  data.forEach(d => {
+    if (!map[d.id_komoditas]) {
+      map[d.id_komoditas] = {
+        nama: d.nama_komoditas,
+        q: {}
+      };
+    }
+    map[d.id_komoditas].q[d.triwulan] = d.harga_rata;
+  });
+
+  const body = document.getElementById('bodyTriwulan');
+  body.innerHTML = '';
+  let no = 1;
+
+  Object.values(map).forEach(k => {
+    body.innerHTML += `
+      <tr>
+        <td class="text-center">${no++}</td>
+        <td>${k.nama}</td>
+        <td class="text-end">${k.q[1] ? 'Rp ' + formatRupiah(k.q[1]) : '–'}</td>
+        <td class="text-end">${k.q[2] ? 'Rp ' + formatRupiah(k.q[2]) : '–'}</td>
+        <td class="text-end">${k.q[3] ? 'Rp ' + formatRupiah(k.q[3]) : '–'}</td>
+        <td class="text-end">${k.q[4] ? 'Rp ' + formatRupiah(k.q[4]) : '–'}</td>
+      </tr>
+    `;
+  });
+}
+document
+  .getElementById('filterTahunTriwulan')
+  .addEventListener('change', e => {
+    loadTabelTriwulan(e.target.value);
+  });
 
 
 // panggil saat halaman siap
@@ -390,7 +462,10 @@ document.addEventListener('DOMContentLoaded', () => {
   loadVolatilitas30HariCard();
   loadTabelRataBulanan();
   loadNarasiOtomatis();
+  loadFilterTahunTriwulan();
+
 });
+
 
 
 
