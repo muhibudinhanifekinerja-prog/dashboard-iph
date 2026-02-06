@@ -126,105 +126,6 @@ async function loadVolatilitas30HariCard() {
     console.error('Error loadVolatilitas30HariCard:', err);
   }
 }
-async function loadTabelRataBulanan() {
-  try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/v_rata_bulanan_4_bulan?select=id_komoditas,nama_komoditas,bulan,harga_rata&order=bulan.asc`,
-      {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-        },
-      }
-    );
-
-    const data = await res.json();
-    if (!data || data.length === 0) return;
-
-    // =========================
-    // 1. Bulan (PASTI 4)
-    // =========================
-    const bulanList = [...new Set(data.map(d => d.bulan))];
-
-    // =========================
-    // 2. HEADER
-    // =========================
-    const header = document.getElementById('headerBulan');
-    header.innerHTML = `
-      <th width="50">No</th>
-      <th>Komoditas</th>
-    `;
-
-    bulanList.forEach((b, idx) => {
-      const tgl = new Date(b);
-      const nama = tgl.toLocaleString('id-ID', { month: 'short' });
-      const tahun = tgl.getFullYear();
-
-      header.innerHTML += `
-        <th class="text-end">
-          ${nama} ${tahun}
-        </th>
-      `;
-    });
-
-    // =========================
-    // 3. KELOMPOKKAN DATA
-    // =========================
-    const map = {};
-    data.forEach(d => {
-      if (!map[d.id_komoditas]) {
-        map[d.id_komoditas] = {
-          nama: d.nama_komoditas,
-          harga: {}
-        };
-      }
-      if (d.harga_rata !== null) {
-        map[d.id_komoditas].harga[d.bulan] = d.harga_rata;
-      }
-    });
-
-    // =========================
-    // 4. BODY
-    // =========================
-    const body = document.getElementById('bodyTable');
-    body.innerHTML = '';
-    let no = 1;
-
-    Object.values(map).forEach(k => {
-      let row = `
-        <tr>
-          <td class="text-center">${no++}</td>
-          <td>${k.nama}</td>
-      `;
-
-      bulanList.forEach((b, idx) => {
-        const curr = k.harga[b] ?? null;
-        const prev = idx > 0 ? k.harga[bulanList[idx - 1]] ?? null : null;
-
-        let indikator = '';
-        if (curr !== null && prev !== null) {
-          if (curr > prev) indikator = '<span class="text-danger">▲</span>';
-          else if (curr < prev) indikator = '<span class="text-success">▼</span>';
-          else indikator = '<span class="text-muted">–</span>';
-        }
-
-        row += `
-          <td class="text-end">
-            ${curr !== null
-              ? `Rp ${formatRupiah(curr)} ${indikator}`
-              : '<span class="text-muted">–</span>'}
-          </td>
-        `;
-      });
-
-      row += '</tr>';
-      body.innerHTML += row;
-    });
-
-  } catch (err) {
-    console.error('Error loadTabelRataBulanan:', err);
-  }
-}
 
 async function loadNarasiOtomatis() {
   try {
@@ -465,6 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterTahunTriwulan();
 
 });
+
 
 
 
