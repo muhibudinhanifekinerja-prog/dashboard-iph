@@ -353,6 +353,127 @@ document
   .addEventListener('change', e => {
     loadTabelTriwulan(e.target.value);
   });
+async function loadTabelRataBulanan3Berturut() {
+  try {
+    /*****************************************
+     * 1. Ambil bulan referensi dari card naik
+     *****************************************/
+    const resRef = await fetch(
+      `${SUPABASE_URL}/rest/v1/v_naik_3_bulan_aktif?select=bulan_m0&limit=1`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+      }
+    );
+
+    const refData = await resRef.json();
+    if (!refData || refData.length === 0) return;
+
+    const bulanM0 = new Date(refData[0].bulan_m0);
+    const bulanM1 = new Date(bulanM0);
+    bulanM1.setMonth(bulanM0.getMonth() - 1);
+    const bulanM2 = new Date(bulanM0);
+    bulanM2.setMonth(bulanM0.getMonth() - 2);
+
+    const bulanList = [bulanM2, bulanM1, bulanM0];
+
+    const bulanISO = bulanList.map(b =>
+      b.toISOString().slice(0, 10)
+    );
+
+    /*****************************************
+     * 2. Ambil data rata-rata BULANAN
+     *****************************************/
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/v_rata_bulanan`
+      + `?bulan=in.(${bulanISO.join(',')})`
+      + `&select=id_komoditas,nama_komoditas,bulan,harga_rata`,
+      {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+      }
+    );
+
+    const data = await res.json();
+    if (!data || data.length === 0) return;
+
+    /*****************************************
+     * 3. HEADER (PASTI 3 BULAN)
+     *****************************************/
+    const header = document.getElementById('headerBulan');
+    header.innerHTML = `
+      <th width="50">No</th>
+      <th>Komoditas</th>
+    `;
+
+    bulanList.forEach(b => {
+      header.innerHTML += `
+        <th class="text-end">
+          ${b.toLocaleString('id-ID', { month: 'short', year: 'numeric' })}
+        </th>
+      `;
+    });
+
+    /*****************************************
+     * 4. KELOMPOKKAN DATA
+     *****************************************/
+    const map = {};
+    data.forEach(d => {
+      if (!map[d.id_komoditas]) {
+        map[d.id_komoditas] = {
+          nama: d.nama_komoditas,
+          harga: {}
+        };
+      }
+      map[d.id_komoditas].harga[d.bulan] = d.harga_rata;
+    });
+
+    /*****************************************
+     * 5. RENDER BODY
+     *****************************************/
+    const body = document.getElementById('bodyTable');
+    body.innerHTML = '';
+    let no = 1;
+
+    Object.values(map).forEach(k => {
+      let row = `
+        <tr>
+          <td class="text-center">${no++}</td>
+          <td>${k.nama}</td>
+      `;
+
+      bulanISO.forEach((b, idx) => {
+        const curr = k.harga[b] ?? null;
+        const prev = idx > 0 ? k.harga[bulanISO[idx - 1]] ?? null : null;
+
+        let indikator = '';
+        if (curr !== null && prev !== null) {
+          if (curr > prev) indikator = '<span class="text-danger">▲</span>';
+          else if (curr < prev) indikator = '<span class="text-success">▼</span>';
+          else indikator = '<span class="text-muted">–</span>';
+        }
+
+        row += `
+          <td class="text-end">
+            ${curr !== null
+              ? `Rp ${formatRupiah(curr)} ${indikator}`
+              : '<span class="text-muted">–</span>'}
+          </td>
+        `;
+      });
+
+      row += '</tr>';
+      body.innerHTML += row;
+    });
+
+  } catch (err) {
+    console.error('Error loadTabelRataBulanan3Berturut:', err);
+  }
+}
 
 
 // panggil saat halaman siap
@@ -366,6 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFilterTahunTriwulan();
 
 });
+
 
 
 
