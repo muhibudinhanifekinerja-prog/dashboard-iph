@@ -482,11 +482,12 @@ document.addEventListener('DOMContentLoaded', () => {
   loadNaik3BulanCard();
   loadTurun3BulanCard(); 
   loadVolatilitas30HariCard();
-  loadTabelRataBulanan();
+  loadTabelRataBulanan3Berturut();
   loadNarasiOtomatis();
   loadFilterTahunTriwulan();
 
 });
+
 
 
 
