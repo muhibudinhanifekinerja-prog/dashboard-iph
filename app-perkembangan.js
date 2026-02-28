@@ -236,8 +236,8 @@ async function loadHargaHarian() {
   const pasar = getCheckedValues("filterPasarList");
 
   const start = `${tahun}-${String(bulan).padStart(2, "0")}-01`;
-  const end = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
-
+  const endDate = new Date(tahun, bulan, 0);
+  const end = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2,"0")}-${String(endDate.getDate()).padStart(2,"0")}`;
   let url =
     `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap` +
     `?tanggal=gte.${start}&tanggal=lte.${end}` +
@@ -397,7 +397,9 @@ function renderPerubahanMingguan(data) {
  ************************************************************/
 async function fetchHargaHarian(tahun, bulan, komoditas, pasar) {
   const start = `${tahun}-${String(bulan).padStart(2, "0")}-01`;
-  const end = new Date(tahun, bulan, 0).toISOString().slice(0, 10);
+
+  const endDate = new Date(tahun, bulan, 0);
+  const end = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2,"0")}-${String(endDate.getDate()).padStart(2,"0")}`;
 
   let url =
     `${SUPABASE_URL}/rest/v1/v_harga_harian_lengkap` +
@@ -556,6 +558,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFilterKomoditas();
   loadFilterPasar();
 });
+
 
 
 
